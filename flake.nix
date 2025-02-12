@@ -24,18 +24,20 @@
       url = "github:serokell/deploy-rs";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    vulnix = {
+      url = "github:flyingcircusio/vulnix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     # Add flake-utils to help with multi-platform support
     flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, nixpkgs-unstable, sops-nix, authentik-nix, deploy-rs, flake-utils }:
+  outputs = { self, nixpkgs, nixpkgs-unstable, sops-nix, authentik-nix, deploy-rs, vulnix, flake-utils }:
   let
     # Systems we want to support
     supportedSystems = [
       "x86_64-linux"
       "aarch64-linux"
-      "x86_64-darwin"
-      "aarch64-darwin"
     ];
 
     # Helper function to initialize pkgs
@@ -51,6 +53,19 @@
     };
   in
   flake-utils.lib.eachSystem supportedSystems (system: {
+    checks.vulnix = {
+      forSystems = supportedSystems;
+      builder = system: let
+        pkgs = mkPkgs system;
+      in pkgs.runCommand "vulnix-vulnerability-check" {
+        buildInputs = [ pkgs.vulnix ];
+      } ''
+        set -e
+        vulnix --system --verbose > $out 2>&1
+        echo "Vulnerability check completed successfully" >> $out
+      '';
+    };
+
     # Dev shell is now per-system
     devShells.default = 
       let
@@ -67,6 +82,7 @@
           sops
           nano
           deploy-rs.packages.${system}.default
+          vulnix.packages.${system}.default
         ];
 
         shellHook = ''
