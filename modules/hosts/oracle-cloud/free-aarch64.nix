@@ -3,28 +3,16 @@ let
   authentik_host = "authentik";
   authentik_tld = "parawell.cloud";
   authentik_fqdn = "${authentik_host}.${authentik_tld}";
+  authentik_port = 9000;
+  foundry_host = "foundry";
+  foundry_tld = "weconverse.net";
+  foundry_fqdn = "${foundry_host}.${foundry_tld}";
+  foundry_port = 30000;
+  timezone = "America/New_York";
 in {
 
   environment.systemPackages = with pkgs; [
-    btop
-    htop
-    tmux
-    ncdu
-    git
-    tree
-    wget
-    inetutils
-    usbutils
-    pciutils
-    file
-    openssl
-    home-manager
-    polkit
-    cachix
-    sops
   ];
-
-  boot.tmp.cleanOnBoot = true;
 
   sops = {
     defaultSopsFile = ../secrets/secrets.yaml;
@@ -33,7 +21,13 @@ in {
     age.keyFile = "/var/lib/sops-nix/key.txt";
     age.generateKey = true;
     secrets = {
-      inadyn = {
+      inadyn-parawell-cloud = {
+        owner = "inadyn";
+        group = "inadyn";
+        mode = "0400";
+        restartUnits = [ "inadyn.service" ];
+      };
+      inadyn-weconverse-net = {
         owner = "inadyn";
         group = "inadyn";
         mode = "0400";
@@ -49,6 +43,12 @@ in {
         group = "authentik";
         mode = "0400";
       };
+      foundryvtt = {
+        owner = "erikp";
+        group = "users";
+        mode = "0400";
+        restartUnits = [ "podman-foundryvtt.service" ];
+      };
     };
   };
 
@@ -57,6 +57,12 @@ in {
     acceptTerms = true;
     defaults.email = "parawell.erik@gmail.com";
     certs.${authentik_fqdn} = {
+      dnsProvider = "namecheap";
+      email = "parawell.erik@gmail.com";
+      environmentFile = config.sops.secrets.lego.path;
+      group = "nginx";
+    };
+    certs.${foundry_fqdn} = {
       dnsProvider = "namecheap";
       email = "parawell.erik@gmail.com";
       environmentFile = config.sops.secrets.lego.path;
@@ -82,12 +88,20 @@ in {
       enable = true;
       settings = {
         allow-ipv6 = true;
-        custom."namecheap" = {
-          username = authentik_tld;
-          include = config.sops.secrets.inadyn.path;
+        custom."namecheap-parawell" = {
+          username = "parawell.cloud";
+          include = config.sops.secrets.inadyn-parawell-cloud.path;
           ddns-server = "dynamicdns.park-your-domain.com";
           ddns-path = "/update?domain=%u&password=%p&host=%h&ip=%i";
           hostname = [ authentik_host ];
+          ddns-response = "<ErrCount>0</ErrCount>";
+        };
+        custom."namecheap-weconverse" = {
+          username = "weconverse.net";
+          include = config.sops.secrets.inadyn-weconverse-net.path;
+          ddns-server = "dynamicdns.park-your-domain.com";
+          ddns-path = "/update?domain=%u&password=%p&host=%h&ip=%i";
+          hostname = [ foundry_host ];
           ddns-response = "<ErrCount>0</ErrCount>";
         };
       };
@@ -102,19 +116,40 @@ in {
 
       virtualHosts.${authentik_fqdn} = {
         forceSSL = true;
-        useACMEHost = "authentik.parawell.cloud";
+        useACMEHost = authentik_fqdn;
         locations."/" = {
-          proxyPass = "http://localhost:9000";
+          # proxyPass = "http://localhost:9000";
           # proxyPass = "http://localhost:${toString config.services.authentik.port}";
+          proxyPass = "http://localhost:${toString authentik_port}";
           proxyWebsockets = true;
+        };
+      };
+      virtualHosts.${foundry_fqdn} = {
+        forceSSL = true;
+        useACMEHost = foundry_fqdn;
+        locations."/" = {
+          proxyPass = "http://localhost:${toString foundry_port}";
+          proxyWebsockets = true;
+          extraConfig = ''
+            proxy_set_header Host $host;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+          '';
+        };
+      };
+      virtualHosts."_" = {
+        default = true;
+        locations."/" = {
+          return = "404";
+          # Or serve a custom 404 page:
+          # root = "/var/www/error-pages";
+          # tryFiles = "/404.html =404";
         };
       };
     };
 
     authentik = {
       enable = true;
-      # The environmentFile needs to be on the target host!
-      # Best use something like sops-nix or agenix to manage it
       environmentFile = config.sops.secrets.authentik.path;
       settings = {
         email = {
@@ -151,48 +186,30 @@ in {
   };
   virtualisation.oci-containers.backend = "podman";
   virtualisation.oci-containers.containers = {
-    # headplane = {
-    #   image = "ghcr.io/tale/headplane:latest";
-    #   autoStart = true;
-    #   ports = [ "3000:3000" ];
-    #   environment = {
-    #     HEADSCALE_URL = "http://headscale:8080";
-    #     COOKIE_SECRET = "your_cookie_secret"; # Replace with a secure secret
-    #     ROOT_API_KEY = "your_root_api_key";   # Replace with a secure API key
-    #     DOCKER_SOCK = "unix:///run/user/${toString config.users.users.erikp.uid}/podman/podman.sock";
-    #     # OIDC_CLIENT_ID = "headscale";
-    #     # OIDC_ISSUER = "https://sso.example.com";
-    #     # OIDC_CLIENT_SECRET = "super_secret_client_secret"; # Replace with your client secret
-    #     # DISABLE_API_KEY_LOGIN = "true";
-    #     COOKIE_SECURE = "false";
-    #     HOST = "0.0.0.0";
-    #     PORT = "3000";
-    #   };
-    #   volumes = [
-    #     "/path/to/your/config:/etc/headplane" # Adjust the path as needed
-    #   ];
-    # };
-    # container-name = {
-    #   image = "container-image";
-    #   autoStart = true;
-    #   environment = {
-    #     DOCKER_SOCK = "unix:///run/user/${toString config.users.users.erikp.uid}/podman/podman.sock";
-    #   };
-    #   ports = [ "127.0.0.1:1234:1234" ];
-    # };
+    foundryvtt = {
+      image = "felddy/foundryvtt:release";
+      autoStart = true;
+      ports = [ "127.0.0.1:${toString foundry_port}:30000" ];
+      environmentFiles = [
+        config.sops.secrets.foundryvtt.path
+      ];
+      volumes = [
+        "/var/lib/foundryvtt:/data"
+      ];
+      environment = {
+        CONTAINER_PRESERVE_CONFIG = "false";
+        FOUNDRY_HOSTNAME = foundry_fqdn;
+        FOUNDRY_PROXY_SSL = "true";
+        FOUNDRY_PROXY_PORT = "443";
+        FOUNDRY_COMPRESS_WEBSOCKET = "true";
+        FOUNDRY_MINIFY_STATIC_FILES = "true";
+        FOUNDRY_IP_DISCOVERY = "false";
+        FOUNDRY_UPNP = "false";
+        FOUNDRY_TELEMETRY = "true";
+        TIMEZONE = timezone;
+      };
+    };
   };
-
-  # Disable unnecessary services and features
-  hardware.pulseaudio.enable = false;
-  services.pipewire.enable = false;
-  hardware.bluetooth.enable = false;
-  services.xserver.enable = false;
-  documentation.enable = false;
-  documentation.doc.enable = false;
-  documentation.info.enable = false;
-  documentation.man.enable = false;
-  services.printing.enable = false;
-  services.avahi.enable = false;
 
   networking = {
     hostName = "oci-authentik-nix";
@@ -203,24 +220,8 @@ in {
     };
   };
 
-  # Set your time zone.
-  time.timeZone = "America/New_York";
+  time.timeZone = timezone;
 
-  # Select internationalisation properties.
-  i18n.defaultLocale = "en_US.UTF-8";
-
-  # Define a user account. Don't forget to set a password with 'passwd'.
-  users.users.erikp = {
-    isNormalUser = true;
-    group = "users";
-    extraGroups = [ "wheel" ];
-    description = "Erik Parawell";
-    hashedPassword = "$6$518O2ct8O/.dFXC3$oGwdfF4bgrojKTwE7guwAgtwUaoJAHDJ0IQbrNlahFz75cyaD4ZZ8UHtLFDvrK2v74gu/rErHZJ6W9lMSxQVW.";
-    openssh.authorizedKeys.keys = [
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGvJ7EXvVEEar9mTg0Yy/hpsRisRtFPyKXHTpMNtigo7"
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAuxLorajNSQsnpoFC0VnB30hqLsmegYijg6fL6gxBXn"
-    ];
-  };
   users.users.salima = {
     isNormalUser = true;
     group = "users";
@@ -230,29 +231,6 @@ in {
     openssh.authorizedKeys.keys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAuxLorajNSQsnpoFC0VnB30hqLsmegYijg6fL6gxBXn" 
     ];
-  };
-  security.sudo.wheelNeedsPassword = false;
-
-  nix = {
-    gc = {
-      automatic = true;
-      dates = "weekly";
-      options = "--delete-older-than 7d";
-    };
-
-    settings = {
-      auto-optimise-store = true;
-      trusted-users = [ "root" "erikp" ];
-      experimental-features = ["flakes" "nix-command"];
-    };
-  };
-
-  # Some programs need SUID wrappers, can be configured further or are
-  # started in user sessions.
-  programs.mtr.enable = true;
-  programs.gnupg.agent = {
-    enable = true;
-    enableSSHSupport = true;
   };
 
   system.stateVersion = "24.05";
