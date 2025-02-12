@@ -1,6 +1,21 @@
 {
+  nixConfig = {
+    substituters = [
+      "https://nix-community.cachix.org"
+      "https://cache.nixos.org"
+      "https://cuda-maintainers.cachix.org"
+    ];
+
+    trusted-public-keys = [
+      "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+      "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
+      "cuda-maintainers.cachix.org-1:0dq3bujKpuEPMCX6U4WylrUDZ9JyUG0VpVZa7CNfq5E="
+    ];
+  };
+
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
+    nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     sops-nix.url = "github:Mic92/sops-nix";
     authentik-nix.url = "github:nix-community/authentik-nix";
     deploy-rs = {
@@ -11,7 +26,7 @@
     flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, sops-nix, authentik-nix, deploy-rs, flake-utils }:
+  outputs = { self, nixpkgs, nixpkgs-unstable, sops-nix, authentik-nix, deploy-rs, flake-utils }:
   let
     # Systems we want to support
     supportedSystems = [
@@ -20,15 +35,25 @@
       "x86_64-darwin"
       "aarch64-darwin"
     ];
+
+    # Helper function to initialize pkgs
+    mkPkgs = system: import nixpkgs {
+      inherit system;
+      config.allowUnfree = true;
+    };
+
+    # Helper function to initialize pkgs-unstable
+    mkPkgsUnstable = system: import nixpkgs-unstable {
+      inherit system;
+      config.allowUnfree = true;
+    };
   in
   flake-utils.lib.eachSystem supportedSystems (system: {
     # Dev shell is now per-system
     devShells.default = 
       let
-        pkgs = import nixpkgs {
-          inherit system;
-          config.allowUnfree = true;
-        };
+        pkgs = mkPkgs system;
+        pkgs-unstable = mkPkgsUnstable system;
       in
       pkgs.mkShell {
         buildInputs = with pkgs; [
@@ -39,6 +64,7 @@
           age
           sops
           nano
+          deploy-rs.packages.${system}.default
         ];
 
         shellHook = ''
@@ -62,11 +88,14 @@
         system = "aarch64-linux";
         modules = [
           "${nixpkgs}/nixos/modules/virtualisation/oci-image.nix"
-          ./modules/common.nix
+          ./modules/configs/common.nix
           ./modules/hosts/oracle-cloud/free-aarch64.nix
           sops-nix.nixosModules.sops
           authentik-nix.nixosModules.default
         ];
+        specialArgs = {
+          pkgs-unstable = mkPkgsUnstable "aarch64-linux";
+        };
       };
 
       # Headscale system
@@ -74,10 +103,13 @@
         system = "x86_64-linux";
         modules = [
           "${nixpkgs}/nixos/modules/virtualisation/oci-image.nix"
-          ./modules/common.nix
+          ./modules/configs/common.nix
           ./modules/hosts/oracle-cloud/free-x86.nix
           sops-nix.nixosModules.sops
         ];
+        specialArgs = {
+          pkgs-unstable = mkPkgsUnstable "x86_64-linux";
+        };
       };
     };
 
