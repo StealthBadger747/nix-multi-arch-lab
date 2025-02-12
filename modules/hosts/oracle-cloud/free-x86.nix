@@ -6,19 +6,18 @@ let
   timezone = "America/New_York";
 
   headplane_port = "3000";
-  headplanePkg = pkgs.callPackage ../../packages/headplane/headplane.nix {};
+  headplanePkg = pkgs.callPackage ../../packages/headplane/headplane.nix { };
 
-  settingsFormat = pkgs.formats.yaml {};
-  headscaleConfig = settingsFormat.generate "headscale-settings.yaml" config.services.headscale.settings;
+  settingsFormat = pkgs.formats.yaml { };
+  headscaleConfig = settingsFormat.generate "headscale-settings.yaml"
+    config.services.headscale.settings;
 in {
-  environment.etc."headscale/config.yaml".source = 
-    lib.mkForce (settingsFormat.generate "headscale-config.yaml" config.services.headscale.settings);
+  environment.etc."headscale/config.yaml".source = lib.mkForce
+    (settingsFormat.generate "headscale-config.yaml"
+      config.services.headscale.settings);
 
-  environment.systemPackages = (with pkgs; [
-    headplanePkg
-  ])
-  ++ (with pkgs-unstable; [
-  ]);
+  environment.systemPackages = (with pkgs; [ headplanePkg ])
+    ++ (with pkgs-unstable; [ ]);
 
   sops = {
     defaultSopsFile = ../../../secrets/secrets.yaml;
@@ -50,7 +49,7 @@ in {
       };
     };
   };
-  
+
   security.polkit.enable = true;
   security.acme = {
     acceptTerms = true;
@@ -90,14 +89,21 @@ in {
         server_url = "https://${headscale_fqdn}";
         dns.base_domain = "internal-${headscale_fqdn}";
         oidc = {
-          issuer = "https://authentik.parawell.cloud/application/o/test-headscale/";
+          issuer =
+            "https://authentik.parawell.cloud/application/o/test-headscale/";
           client_id = "FylC3SexPmVQagmIx7mT1FrmXpzpjHdQzykXRfMK";
-          client_secret_path = config.sops.secrets.headscale_oidc_client_secret.path;
+          client_secret_path =
+            config.sops.secrets.headscale_oidc_client_secret.path;
           scope = [ "openid" "profile" "email" ];
           # extra_params = {
           #   domain_hint = "parawell.cloud";
           # };
-          allowed_users = [ "parawell.erik@gmail.com" "ac130kire@gmail.com" "connor@connorgolden.me" "nedimazar@gmail.com" ];
+          allowed_users = [
+            "parawell.erik@gmail.com"
+            "ac130kire@gmail.com"
+            "connor@connorgolden.me"
+            "nedimazar@gmail.com"
+          ];
           # allowed_domains = [ "parawell.cloud" ];
           strip_email_domain = true;
         };
@@ -115,7 +121,8 @@ in {
         forceSSL = true;
         useACMEHost = headscale_fqdn;
         locations."/" = {
-          proxyPass = "http://localhost:${toString config.services.headscale.port}";
+          proxyPass =
+            "http://localhost:${toString config.services.headscale.port}";
           proxyWebsockets = true;
         };
         locations."/admin" = {
@@ -157,11 +164,11 @@ in {
     description = "Headplane Service User";
     shell = pkgs.bash;
   };
-  users.groups.headplane = {};
+  users.groups.headplane = { };
 
   networking = {
     hostName = "oci-headscale-nix";
-    nameservers = ["1.1.1.1" "8.8.4.4" "8.8.8.8" "9.9.9.9"];
+    nameservers = [ "1.1.1.1" "8.8.4.4" "8.8.8.8" "9.9.9.9" ];
     firewall = {
       enable = true;
       allowedTCPPorts = [ 22 80 443 ];

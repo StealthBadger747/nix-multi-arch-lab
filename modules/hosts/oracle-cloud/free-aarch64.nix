@@ -11,8 +11,7 @@ let
   timezone = "America/New_York";
 in {
 
-  environment.systemPackages = with pkgs; [
-  ];
+  environment.systemPackages = with pkgs; [ ];
 
   sops = {
     defaultSopsFile = ../../../secrets/secrets.yaml;
@@ -75,7 +74,7 @@ in {
       enable = true;
       useRoutingFeatures = "both";
     };
-    
+
     openssh = {
       enable = true;
       settings = {
@@ -172,7 +171,7 @@ in {
     description = "Authentik Worker User";
     shell = pkgs.bash;
   };
-  users.groups.authentik = {};
+  users.groups.authentik = { };
 
   virtualisation.containers.enable = true;
   virtualisation = {
@@ -190,12 +189,8 @@ in {
       image = "felddy/foundryvtt:release";
       autoStart = true;
       ports = [ "127.0.0.1:${toString foundry_port}:30000" ];
-      environmentFiles = [
-        config.sops.secrets.foundryvtt.path
-      ];
-      volumes = [
-        "/var/lib/foundryvtt:/data"
-      ];
+      environmentFiles = [ config.sops.secrets.foundryvtt.path ];
+      volumes = [ "/var/lib/foundryvtt:/data" ];
       environment = {
         CONTAINER_PRESERVE_CONFIG = "false";
         FOUNDRY_HOSTNAME = foundry_fqdn;
@@ -213,7 +208,7 @@ in {
 
   networking = {
     hostName = "oci-authentik-nix";
-    nameservers = ["1.1.1.1" "8.8.4.4" "8.8.8.8" "9.9.9.9"];
+    nameservers = [ "1.1.1.1" "8.8.4.4" "8.8.8.8" "9.9.9.9" ];
     firewall = {
       enable = true;
       allowedTCPPorts = [ 22 80 443 ];
@@ -227,9 +222,10 @@ in {
     group = "users";
     extraGroups = [ "wheel" ];
     description = "Salima Parawell";
-    hashedPassword = "$6$518O2ct8O/.dFXC3$oGwdfF4bgrojKTwE7guwAgtwUaoJAHDJ0IQbrNlahFz75cyaD4ZZ8UHtLFDvrK2v74gu/rErHZJ6W9lMSxQVW.";
+    hashedPassword =
+      "$6$518O2ct8O/.dFXC3$oGwdfF4bgrojKTwE7guwAgtwUaoJAHDJ0IQbrNlahFz75cyaD4ZZ8UHtLFDvrK2v74gu/rErHZJ6W9lMSxQVW.";
     openssh.authorizedKeys.keys = [
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAuxLorajNSQsnpoFC0VnB30hqLsmegYijg6fL6gxBXn" 
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAuxLorajNSQsnpoFC0VnB30hqLsmegYijg6fL6gxBXn"
     ];
   };
 

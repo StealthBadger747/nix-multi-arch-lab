@@ -1,5 +1,4 @@
-{ config, pkgs, lib, ... }:
-{
+{ config, pkgs, lib, ... }: {
   environment.systemPackages = with pkgs; [
     btop
     htop
@@ -57,7 +56,7 @@
   services.avahi.enable = false;
 
   networking = {
-    nameservers = ["1.1.1.1" "8.8.4.4" "8.8.8.8" "9.9.9.9"];
+    nameservers = [ "1.1.1.1" "8.8.4.4" "8.8.8.8" "9.9.9.9" ];
     firewall = {
       enable = true;
       allowedTCPPorts = [ 22 ];
@@ -73,7 +72,8 @@
     group = "users";
     extraGroups = [ "wheel" ];
     description = "Erik Parawell";
-    hashedPassword = "$6$518O2ct8O/.dFXC3$oGwdfF4bgrojKTwE7guwAgtwUaoJAHDJ0IQbrNlahFz75cyaD4ZZ8UHtLFDvrK2v74gu/rErHZJ6W9lMSxQVW.";
+    hashedPassword =
+      "$6$518O2ct8O/.dFXC3$oGwdfF4bgrojKTwE7guwAgtwUaoJAHDJ0IQbrNlahFz75cyaD4ZZ8UHtLFDvrK2v74gu/rErHZJ6W9lMSxQVW.";
     openssh.authorizedKeys.keys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGvJ7EXvVEEar9mTg0Yy/hpsRisRtFPyKXHTpMNtigo7"
     ];
@@ -90,7 +90,7 @@
     settings = {
       auto-optimise-store = true;
       trusted-users = [ "root" "erikp" ];
-      experimental-features = ["flakes" "nix-command"];
+      experimental-features = [ "flakes" "nix-command" ];
     };
   };
 

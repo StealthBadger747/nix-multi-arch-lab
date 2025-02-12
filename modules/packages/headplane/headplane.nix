@@ -1,12 +1,4 @@
-{
-  lib,
-  stdenv,
-  pnpm_9,
-  git,
-  makeWrapper,
-  nodejs,
-  fetchFromGitHub,
-}:
+{ lib, stdenv, pnpm_9, git, makeWrapper, nodejs, fetchFromGitHub, }:
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "headplane";
@@ -50,7 +42,7 @@ stdenv.mkDerivation (finalAttrs: {
     # Ugly hacks (why!?!)
     sed -i 's;/build/source/node_modules/react-router/dist/development/index.mjs;react-router;' $out/share/headplane/build/headplane/server.js
     sed -i 's;define_process_env_default.PORT;process.env.PORT;' $out/share/headplane/build/headplane/server.js
-    
+
     makeWrapper ${lib.getExe nodejs} $out/bin/headplane \
       --add-flags "$out/share/headplane/build/headplane/server.js" \
       --set BUILD_PATH $out/share/headplane/build \
@@ -59,15 +51,11 @@ stdenv.mkDerivation (finalAttrs: {
       --chdir $out/share/headplane
   '';
 
-  nativeBuildInputs = [
-    git
-    makeWrapper
-    nodejs
-    pnpm_9.configHook
-  ];
+  nativeBuildInputs = [ git makeWrapper nodejs pnpm_9.configHook ];
 
   meta = with lib; {
-    description = "Headscale is a self-hosted version of the Tailscale control server";
+    description =
+      "Headscale is a self-hosted version of the Tailscale control server";
     mainProgram = "headscale";
     homepage = "https://github.com/tale/headplane";
     license = licenses.mit;

@@ -1,20 +1,20 @@
-{ lib, python3, fetchFromGitHub}:
+{ lib, python3, fetchFromGitHub }:
 let
   pythonPackages = python3.pkgs;
-  packageOverrides = self: super: import ./python-packages.nix {
-    inherit (pythonPackages) pkgs fetchurl fetchgit fetchhg;
-  } self super;
-  
+  packageOverrides = self: super:
+    import ./python-packages.nix {
+      inherit (pythonPackages) pkgs fetchurl fetchgit fetchhg;
+    } self super;
+
   python = python3.override {
     inherit packageOverrides;
     self = python;
   };
-in
-python.pkgs.buildPythonApplication {
+in python.pkgs.buildPythonApplication {
   pname = "ycotd-email-processor";
   version = "0.1.0";
 
-  src = ./.;  # Assuming main.py is in the same directory
+  src = ./.; # Assuming main.py is in the same directory
 
   propagatedBuildInputs = with python.pkgs; [
     python-dotenv
