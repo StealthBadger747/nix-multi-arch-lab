@@ -65,6 +65,20 @@
           '';
       };
 
+      packages = {
+        default = self.packages.${system}.oci-aarch64-image;
+        oci-aarch64-image = 
+          let
+            aarch64Config = self.nixosConfigurations.oci-aarch64-base;
+          in
+          if system == "aarch64-linux"
+          then aarch64Config.config.system.build.OCIImage
+          else nixpkgs.legacyPackages.${system}.runCommand "oci-aarch64-image" {} ''
+            echo "This package can only be built on aarch64-linux systems"
+            exit 1
+          '';
+      };
+
       # Dev shell is now per-system
       devShells.default = let
         pkgs = mkPkgs system;
@@ -98,6 +112,17 @@
     }) // {
       # NixOS configurations remain unchanged but we'll make them more explicit
       nixosConfigurations = {
+        # Base OCI aarch64
+        oci-aarch64-base = nixpkgs.lib.nixosSystem {
+          system = "aarch64-linux";
+          modules = [
+            "${nixpkgs}/nixos/modules/virtualisation/oci-image.nix"
+            ./modules/configs/common.nix
+            ./modules/hosts/oracle-cloud/base-aarch64.nix
+          ];
+          specialArgs = { pkgs-unstable = mkPkgsUnstable "aarch64-linux"; };
+        };
+
         # Authentik system
         oci-authentik = nixpkgs.lib.nixosSystem {
           system = "aarch64-linux";
