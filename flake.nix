@@ -115,7 +115,7 @@
           modules = [
             "${nixpkgs}/nixos/modules/virtualisation/oci-image.nix"
             ./modules/configs/common.nix
-            ./modules/hosts/oracle-cloud/base-aarch64.nix
+            ./modules/hosts/oracle-cloud/base.nix
           ];
           specialArgs = { pkgs-unstable = mkPkgsUnstable "aarch64-linux"; };
         };
