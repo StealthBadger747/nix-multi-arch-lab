@@ -53,6 +53,7 @@ cd nix-homelab
 - Adjust firewall rules and other security settings as needed
 
 4. Deploy:
+- Enter a dev shell with `nix develop` and run:
 ```bash
 deploy .#oci-headscale
 deploy .#oci-authentik

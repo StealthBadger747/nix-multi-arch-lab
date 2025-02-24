@@ -28,7 +28,6 @@
       url = "github:flyingcircusio/vulnix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # Add flake-utils to help with multi-platform support
     flake-utils.url = "github:numtide/flake-utils";
   };
 
@@ -86,8 +85,7 @@
       in pkgs.mkShell {
         buildInputs = with pkgs; [
           oci-cli
-          # terraform
-          # python3
+          opentofu
           jq
           age
           sops
@@ -97,9 +95,8 @@
         ];
 
         shellHook = ''
-          echo "OCI CLI and Terraform development environment loaded"
           echo "OCI CLI version: $(oci --version)"
-          # echo "Terraform version: $(terraform version)"
+          echo "Opentofu version: $(tofu version)"
 
           # Add the script to PATH
           export PATH="$PWD/scripts:$PATH"
