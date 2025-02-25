@@ -48,6 +48,11 @@ in {
         mode = "0400";
         restartUnits = [ "podman-foundryvtt.service" ];
       };
+      oci-aarch64-wireguard-private-key = {
+        owner = "wiregaurd";
+        group = "wireguard";
+        mode = "0400";
+      }
     };
   };
 
@@ -212,6 +217,40 @@ in {
     firewall = {
       enable = true;
       allowedTCPPorts = [ 22 80 443 ];
+      allowedUDPPorts = [ 51820 ];
+    };
+
+    # Wireguard stuff
+    nat.enable = true;
+    nat.externalInterface = "enp0s6";
+    nat.internalInterfaces = [ "wg0" ];
+    wireguard.enable = true;
+
+    wireguard.interfaces = {
+      wg0 = {
+        ips = [ "10.100.0.1/24" ];
+        listenPort = 51820;
+
+        # This allows the wireguard server to route your traffic to the internet and hence be like a VPN
+        # For this to work you have to set the dnsserver IP of your router (or dnsserver of choice) in your clients
+        postSetup = ''
+          ${pkgs.iptables}/bin/iptables -t nat -A POSTROUTING -s 10.100.0.0/24 -o enp0s6 -j MASQUERADE
+        '';
+
+        # This undoes the above command
+        postShutdown = ''
+          ${pkgs.iptables}/bin/iptables -t nat -D POSTROUTING -s 10.100.0.0/24 -o enp0s6 -j MASQUERADE
+        '';
+        privateKeyFile = config.sops.secrets.oci-aarch64-wireguard-private-key.path;
+
+        peers = [
+          # List of allowed peers.
+          { # Bugatti Nix
+            publicKey = "{john doe's public key}";
+            allowedIPs = [ "10.100.0.2/32" ];
+          }
+        ];
+      };
     };
   };
 

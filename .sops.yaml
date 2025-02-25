@@ -11,3 +11,8 @@ creation_rules:
       - *oci_headscale
       - *oci_authentik
       - *erik_mbp
+  - path_regex: secrets/hosts/gibraltar/bugatti-nix-secrets\.yaml$
+    key_groups:
+    - age:
+      - *bugatti_nix
+      - *erik_mbp

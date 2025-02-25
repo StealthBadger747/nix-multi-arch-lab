@@ -103,7 +103,7 @@
           # - 'op://vault/title', 'op://vault/title/field', or 'op://vault/title/section/field'
           export EDITOR=nano
           # alias sops='sops-age-op -k "op://Private/personal_remote_machines/private key" '
-          export SOPS_AGE_KEY="$(op read op://Private/age_key/password)"
+          # export SOPS_AGE_KEY="$(op read op://Private/age_key/password)"
         '';
       };
     }) // {
@@ -144,6 +144,19 @@
           ];
           specialArgs = { pkgs-unstable = mkPkgsUnstable "x86_64-linux"; };
         };
+
+        # Bugatti Proxmox Nix
+        bugatti-proxmox-nix = nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          modules = [
+            "${nixpkgs}/nixos/modules/virtualisation/proxmox-image.nix"
+            ./modules/configs/common.nix
+            ./modules/hosts/gibraltar/bugatti-nix/main.nix
+            ./modules/hosts/gibraltar/bugatti-nix/tailscale.nix
+            sops-nix.nixosModules.sops
+          ];
+          specialArgs = { pkgs-unstable = mkPkgsUnstable "x86_64-linux"; };
+        };
       };
 
       # Deploy-rs configuration
@@ -166,6 +179,17 @@
             user = "root";
             path = deploy-rs.lib."x86_64-linux".activate.nixos
               self.nixosConfigurations.oci-headscale;
+            magicRollback = true;
+          };
+        };
+
+        gib-bugatti = {
+          hostname = "100.64.0.28";
+          sshUser = "erikp";
+          profiles.system = {
+            user = "root";
+            path = deploy-rs.lib."x86_64-linux".activate.nixos
+              self.nixosConfigurations.bugatti-proxmox-nix;
             magicRollback = true;
           };
         };
