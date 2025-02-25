@@ -31,6 +31,7 @@
     nmap
     jq
     busybox
+    neofetch
   ];
 
   programs.nix-ld = {
