@@ -7,7 +7,7 @@
   login_server = "https://headscale.parawell.cloud";
 in {
   sops = {
-    defaultSopsFile = ../../../secrets/hosts/gibraltar/bugatti-nix-secrets.yaml;
+    defaultSopsFile = ../../../../secrets/hosts/gibraltar/bugatti-nix-secrets.yaml;
     defaultSopsFormat = "yaml";
     age.sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
     age.keyFile = "/var/lib/sops-nix/key.txt";

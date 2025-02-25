@@ -1,0 +1,52 @@
+name: Build
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+jobs:
+  build-amd64:
+    name: Build (x86_64)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Connect to Tailscale
+        uses: tailscale/github-action@v3
+        with:
+          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
+          tags: tag:gha
+          args: --login-server=https://headscale.parawell.cloud
+          
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+        
+      - name: Build project (x86_64)
+        run: nix develop -c deploy .#gib-bugatti
+
+  # build-aarch64:
+  #   name: Build (aarch64)
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Connect to Tailscale
+  #       uses: tailscale/github-action@v3
+  #       with:
+  #         oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+  #         oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+  #         tags: tag:ci,arch:arm64
+          
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+        
+  #     - name: Install Nix
+  #       uses: DeterminateSystems/nix-installer-action@main
+        
+  #     - name: Set up QEMU
+  #       uses: docker/setup-qemu-action@v2
+  #       with:
+  #         platforms: arm64
+        
+  #     - name: Build project (aarch64)
+  #       run: nix build .#aarch64-linux

@@ -56,7 +56,7 @@
     gc = {
       automatic = true;
       dates = "weekly";
-      options = "--delete-older-than 90d";
+      options = lib.mkDefault "--delete-older-than 90d";
     };
   };
 

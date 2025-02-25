@@ -52,7 +52,7 @@ in {
         owner = "wiregaurd";
         group = "wireguard";
         mode = "0400";
-      }
+      };
     };
   };
 
@@ -245,10 +245,10 @@ in {
 
         peers = [
           # List of allowed peers.
-          { # Bugatti Nix
-            publicKey = "{john doe's public key}";
-            allowedIPs = [ "10.100.0.2/32" ];
-          }
+          # { # Bugatti Nix
+          #   publicKey = "{john doe's public key}";
+          #   allowedIPs = [ "10.100.0.2/32" ];
+          # }
         ];
       };
     };
