@@ -19,14 +19,23 @@ jobs:
           
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v3
         
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@main
+        with:
+          extra-conf: |
+            fallback = true
+            http-connections = 128
+            max-substitution-jobs = 128
+            extra-platforms = aarch64-linux
+            trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= system:5M8uBPjS68HTadSbeCs0Jiu0Z1tJBNdahtKBCXhl+Z0= nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs= numtide.cachix.org-1:2ps1kLBUWjxIneOy1Ik6cQjb41X0iXVXeHigGmycPPE=
 
       - name: Configure SSH
         uses: 1password/load-secrets-action@v2
         with:
-          # Export secrets as environment variables
           export-env: true
         env:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
@@ -40,7 +49,11 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
 
       - name: Build project (x86_64)
-        run: nix develop --system x86_64-linux --accept-flake-config -c deploy .#gib-bugatti
+        env:
+          NIX_SYSTEM: x86_64-linux
+        run: nix develop --accept-flake-config --command bash -c 'deploy ".#oci-headscale"'
+        # run: nix develop --system x86_64-linux --ignore-environment --keep NIX_SYSTEM --keep SOPS_AGE_KEY --command bash -c 'deploy ".#oci-headscale"'
+        # run: nix develop --system x86_64-linux --ignore-environment --keep NIX_SYSTEM --keep SOPS_AGE_KEY --accept-flake-config -c deploy .#gib-bugatti
 
   # build-aarch64:
   #   name: Build (aarch64)
