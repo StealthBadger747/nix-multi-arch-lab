@@ -40,7 +40,7 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
 
       - name: Build project (x86_64)
-        run: nix develop --accept-flake-config -c deploy .#gib-bugatti
+        run: nix develop --system x86_64-linux --accept-flake-config -c deploy .#gib-bugatti
 
   # build-aarch64:
   #   name: Build (aarch64)
