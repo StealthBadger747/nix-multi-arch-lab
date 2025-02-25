@@ -2,8 +2,8 @@ name: Build
 
 on:
   pull_request:
-  push:
-    branches: [master]
+  # push:
+  #   branches: [master]
 
 jobs:
   build-amd64:
@@ -24,7 +24,7 @@ jobs:
         uses: DeterminateSystems/nix-installer-action@main
         
       - name: Build project (x86_64)
-        run: nix develop -c deploy .#gib-bugatti
+        run: nix develop --accept-flake-config -c deploy .#gib-bugatti
 
   # build-aarch64:
   #   name: Build (aarch64)
