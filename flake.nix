@@ -65,7 +65,7 @@
       };
 
       packages = {
-        default = self.packages.${system}.oci-aarch64-image;
+        # default = self.packages.${system}.oci-aarch64-image;
         oci-aarch64-image = 
           let
             aarch64Config = self.nixosConfigurations.oci-aarch64-base;
