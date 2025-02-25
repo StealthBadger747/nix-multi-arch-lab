@@ -41,6 +41,15 @@
 
   boot.binfmt.emulatedSystems = ["aarch64-linux"];
 
+  virtualisation.containers.enable = true;
+  virtualisation = {
+    podman = {
+      enable = true;
+      dockerCompat = true;
+      defaultNetwork.settings.dns_enabled = true;
+    };
+  };
+
   networking = {
     hostName = "bugatti-proxmox-nix";
     nameservers = ["1.1.1.1" "8.8.4.4" "8.8.8.8" "9.9.9.9"];

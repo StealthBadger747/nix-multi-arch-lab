@@ -2,6 +2,8 @@ result/
 .venv
 result
 
+.act-secrets
+
 # OCI Keys
 terraform/.oci
 
