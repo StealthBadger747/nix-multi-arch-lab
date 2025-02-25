@@ -24,9 +24,10 @@ jobs:
         uses: DeterminateSystems/nix-installer-action@main
 
       - name: Configure SSH
-        uses: 1password/load-secrets-action@v1
+        uses: 1password/load-secrets-action@v2
         with:
           # Export secrets as environment variables
+          export-env: true
         env:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
           DEPLOY_SSH_KEY: "op://Github_Actions/ssh_key/private key"
