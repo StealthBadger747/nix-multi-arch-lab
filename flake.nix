@@ -65,17 +65,16 @@
       };
 
       packages = {
-        # default = self.packages.${system}.oci-aarch64-image;
-        # oci-aarch64-image = 
-        #   let
-        #     aarch64Config = self.nixosConfigurations.oci-aarch64-base;
-        #   in
-        #   if system == "aarch64-linux"
-        #   then aarch64Config.config.system.build.OCIImage
-        #   else nixpkgs.legacyPackages.${system}.runCommand "oci-aarch64-image" {} ''
-        #     echo "This package can only be built on aarch64-linux systems"
-        #     exit 1
-        #   '';
+        oci-aarch64-image = 
+          let
+            aarch64Config = self.nixosConfigurations.oci-aarch64-base;
+          in
+          if system == "aarch64-linux"
+          then aarch64Config.config.system.build.OCIImage
+          else nixpkgs.legacyPackages.${system}.runCommand "oci-aarch64-image" {} ''
+            echo "This package can only be built on aarch64-linux systems"
+            exit 1
+          '';
       };
 
       # Dev shell is now per-system
@@ -110,28 +109,28 @@
       # NixOS configurations remain unchanged but we'll make them more explicit
       nixosConfigurations = {
         # Base OCI aarch64
-        # oci-aarch64-base = nixpkgs.lib.nixosSystem {
-        #   system = "aarch64-linux";
-        #   modules = [
-        #     "${nixpkgs}/nixos/modules/virtualisation/oci-image.nix"
-        #     ./modules/configs/common.nix
-        #     ./modules/hosts/oracle-cloud/base.nix
-        #   ];
-        #   specialArgs = { pkgs-unstable = mkPkgsUnstable "aarch64-linux"; };
-        # };
+        oci-aarch64-base = nixpkgs.lib.nixosSystem {
+          system = "aarch64-linux";
+          modules = [
+            "${nixpkgs}/nixos/modules/virtualisation/oci-image.nix"
+            ./modules/configs/common.nix
+            ./modules/hosts/oracle-cloud/base.nix
+          ];
+          specialArgs = { pkgs-unstable = mkPkgsUnstable "aarch64-linux"; };
+        };
 
-        # # Authentik system
-        # oci-authentik = nixpkgs.lib.nixosSystem {
-        #   system = "aarch64-linux";
-        #   modules = [
-        #     "${nixpkgs}/nixos/modules/virtualisation/oci-image.nix"
-        #     ./modules/configs/common.nix
-        #     ./modules/hosts/oracle-cloud/free-aarch64.nix
-        #     sops-nix.nixosModules.sops
-        #     authentik-nix.nixosModules.default
-        #   ];
-        #   specialArgs = { pkgs-unstable = mkPkgsUnstable "aarch64-linux"; };
-        # };
+        # Authentik system
+        oci-authentik = nixpkgs.lib.nixosSystem {
+          system = "aarch64-linux";
+          modules = [
+            "${nixpkgs}/nixos/modules/virtualisation/oci-image.nix"
+            ./modules/configs/common.nix
+            ./modules/hosts/oracle-cloud/free-aarch64.nix
+            sops-nix.nixosModules.sops
+            authentik-nix.nixosModules.default
+          ];
+          specialArgs = { pkgs-unstable = mkPkgsUnstable "aarch64-linux"; };
+        };
 
         # Headscale system
         oci-headscale = nixpkgs.lib.nixosSystem {
@@ -161,16 +160,16 @@
 
       # Deploy-rs configuration
       deploy.nodes = {
-        # oci-authentik = {
-        #   hostname = "150.136.213.118";
-        #   sshUser = "erikp";
-        #   profiles.system = {
-        #     user = "root";
-        #     path = deploy-rs.lib."aarch64-linux".activate.nixos
-        #       self.nixosConfigurations.oci-authentik;
-        #     magicRollback = true;
-        #   };
-        # };
+        oci-authentik = {
+          hostname = "150.136.213.118";
+          sshUser = "erikp";
+          profiles.system = {
+            user = "root";
+            path = deploy-rs.lib."aarch64-linux".activate.nixos
+              self.nixosConfigurations.oci-authentik;
+            magicRollback = true;
+          };
+        };
 
         oci-headscale = {
           hostname = "129.153.154.190";
