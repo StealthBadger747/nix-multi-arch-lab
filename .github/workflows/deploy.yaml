@@ -2,8 +2,8 @@ name: Build
 
 on:
   pull_request:
-  # push:
-  #   branches: [master]
+  push:
+    branches: [master]
 
 jobs:
   build-amd64:
@@ -22,7 +22,22 @@ jobs:
         
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@main
-        
+
+      - name: Configure SSH
+        uses: 1password/load-secrets-action@v1
+        with:
+          # Export secrets as environment variables
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+          DEPLOY_SSH_KEY: "op://Github_Actions/ssh_key/private key"
+          SOPS_AGE_KEY: "op://Github_Actions/nix_age_secret/private_key"
+
+      - name: Setup SSH Key
+        run: |
+          mkdir -p ~/.ssh
+          echo "$DEPLOY_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+
       - name: Build project (x86_64)
         run: nix develop --accept-flake-config -c deploy .#gib-bugatti
 
