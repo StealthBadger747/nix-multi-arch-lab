@@ -1,17 +1,18 @@
 terraform {
-    required_providers {
-        oci = {
-            source = "oracle/oci"
-        }
+  required_providers {
+    oci = {
+      source = "opentofu/oci"
+      version = ">=6.3.0"
     }
+  }
 }
 
 provider "oci" {
-    user_ocid = "ocid1.user.oc1..aaaaaaaacglct34z7ifhk6zbx5x4idgcnixl5f5l7ydwzathnymjtfqi36fq"
-    tenancy_ocid = "ocid1.tenancy.oc1..aaaaaaaa3whclbabtpx6ivlsui76iicxrvlxv3zts2zp2bwh6ibstrcdmsda"
-    private_key_path = "./.oci/oracle.pem"
-    fingerprint = "6d:ac:eb:de:ed:33:b1:bb:7c:61:91:f1:69:3b:91:94"
-    region = "us-ashburn-1"
+  user_ocid = "ocid1.user.oc1..aaaaaaaacglct34z7ifhk6zbx5x4idgcnixl5f5l7ydwzathnymjtfqi36fq"
+  tenancy_ocid = "ocid1.tenancy.oc1..aaaaaaaa3whclbabtpx6ivlsui76iicxrvlxv3zts2zp2bwh6ibstrcdmsda"
+  private_key_path = "./.oci/oracle.pem"
+  fingerprint = "6d:ac:eb:de:ed:33:b1:bb:7c:61:91:f1:69:3b:91:94"
+  region = "us-ashburn-1"
 }
 
 # Use a data source to reference the existing bucket
@@ -59,7 +60,7 @@ resource "oci_core_image" "imported_image" {
   }
 
   # Optional: Launch mode for the image
-  launch_mode = "NATIVE"
+  launch_mode = "PARAVIRTUALIZED"
 
   # Add a dependency on the object resource
   depends_on = [oci_objectstorage_object.nixos_image]
@@ -113,10 +114,10 @@ output "imported_image_ocid" {
 # }
 locals {
   ssh_username            = "opc"
-  instance_shape          = "VM.Standard.E2.1.Micro"  # Changed to match the working VM
-  cpu_cores_count         = "1"  # Changed to match the working VM
-  memory_in_gbs           = "1"  # Changed to match the working VM
-  boot_volume_vpus_per_gb = "10"  # Reduced to a more standard value
+  instance_shape          = "VM.Standard.E2.1.Micro"
+  cpu_cores_count         = "1"
+  memory_in_gbs           = "1"
+  boot_volume_vpus_per_gb = "10"
   os_image_ocid           = oci_core_image.imported_image.id
   instance_public_ip      = oci_core_instance.instance.public_ip
   instance_ids            = oci_core_instance.instance[*].id
@@ -156,7 +157,7 @@ resource "oci_core_route_table" "public_route_table" {
 resource "oci_core_security_list" "allow_ssh_http_https" {
   compartment_id = var.compartment_ocid
   vcn_id         = oci_core_vcn.terraform_vcn.id
-  display_name   = "Allow SSH"
+  display_name   = "Allow SSH/HTTP/HTTPS"
 
   egress_security_rules {
     destination = "0.0.0.0/0"
@@ -164,8 +165,8 @@ resource "oci_core_security_list" "allow_ssh_http_https" {
   }
 
   ingress_security_rules {
-    source   = "0.0.0.0/0" # Or a specific IP range
-    protocol = "6"         # TCP
+    source   = "0.0.0.0/0"
+    protocol = "6"
     tcp_options {
       min = 22
       max = 22
@@ -173,8 +174,8 @@ resource "oci_core_security_list" "allow_ssh_http_https" {
   }
 
   ingress_security_rules {
-    source   = "0.0.0.0/0" # Or a specific IP range
-    protocol = "6"         # TCP
+    source   = "0.0.0.0/0"
+    protocol = "6"
     tcp_options {
       min = 80
       max = 80
@@ -182,8 +183,8 @@ resource "oci_core_security_list" "allow_ssh_http_https" {
   }
 
   ingress_security_rules {
-    source   = "0.0.0.0/0" # Or a specific IP range
-    protocol = "6"         # TCP
+    source   = "0.0.0.0/0"
+    protocol = "6"
     tcp_options {
       min = 443
       max = 443
@@ -219,7 +220,7 @@ resource "oci_core_instance" "instance" {
 
   create_vnic_details {
     subnet_id        = oci_core_subnet.terraform_subnet.id
-    assign_public_ip = true # Assign a public IP address to the instance
+    assign_public_ip = true
   }
 
   metadata = {

@@ -81,6 +81,11 @@
   };
   security.sudo.wheelNeedsPassword = false;
 
+  programs.nix-ld = {
+    enable = true;
+    package = pkgs.nix-ld-rs;
+  };
+
   nix = {
     gc = {
       automatic = true;

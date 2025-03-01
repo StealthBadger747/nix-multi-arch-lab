@@ -21,7 +21,6 @@
     file
     openssl
     cachix
-    nix-ld-rs
     wireguard-go
     wireguard-tools
     speedtest-go
@@ -33,11 +32,6 @@
     busybox
     neofetch
   ];
-
-  programs.nix-ld = {
-    enable = true;
-    package = pkgs.nix-ld-rs;
-  };
 
   boot.binfmt.emulatedSystems = ["aarch64-linux"];
 

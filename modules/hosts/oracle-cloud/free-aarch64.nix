@@ -49,8 +49,8 @@ in {
         restartUnits = [ "podman-foundryvtt.service" ];
       };
       oci-aarch64-wireguard-private-key = {
-        owner = "wiregaurd";
-        group = "wireguard";
+        owner = "root";
+        group = "root";
         mode = "0400";
       };
     };
@@ -224,7 +224,7 @@ in {
     nat.enable = true;
     nat.externalInterface = "enp0s6";
     nat.internalInterfaces = [ "wg0" ];
-    wireguard.enable = true;
+    wireguard.enable = false;
 
     wireguard.interfaces = {
       wg0 = {
