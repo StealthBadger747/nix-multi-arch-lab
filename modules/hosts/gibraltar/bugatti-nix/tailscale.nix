@@ -9,8 +9,8 @@ in {
   sops = {
     secrets = {
       tailscale-authkey = {
-        owner = "tailscale";
-        group = "tailscale";
+        owner = "root";
+        group = "root";
         mode = "0400";
       };
     };

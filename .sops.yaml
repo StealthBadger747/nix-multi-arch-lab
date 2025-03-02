@@ -1,5 +1,5 @@
 keys:
-  - &bugatti_nix age1f3tl0q3k7laxzv2q8eycus5vdfr7gkd56d9k0tnykr6n3zj9wq6sqg5wnn
+  - &bugatti_nix age1q3575mlegx4mzxtmzey5rzg9nwrnwlc9mlr5jeqcfltnzt6gwcqq6jdrka
   - &oci_headscale age1qwuz9ud98q82xpresskwkgd20r35u0valpddq973h2a9dad6cyjqxqmzt2
   - &oci_authentik age1hj5dyl0wzlq92ms2hrut6he05dqv0pknlv7wpyv2jywhz2hqwe9qgpt5dl
   - &erik_mbp age17fq29yexw9rf30je5xp86hdda6tgug52sax7vy0af2sngempqv0qwhe4vr
@@ -9,6 +9,7 @@ creation_rules:
     key_groups:
     - age:
       - *bugatti_nix
+      
       - *oci_headscale
       - *oci_authentik
       - *erik_mbp

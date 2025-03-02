@@ -73,6 +73,21 @@ deploy .#oci-authentik
 └── .sops.yaml         # SOPS configuration
 ```
 
+## Sops Usage
+
+For additional information refer to https://github.com/Mic92/sops-nix
+
+### Adding a target server to your sops config
+
+For example I want to add bugatti server to my sops config:
+
+```nix
+$ nix-shell -p ssh-to-age --run 'ssh-keyscan 10.32.4.101 | ssh-to-age
+# outputs the key
+$ nano .sops.yaml # Add the key to the list and reference it properly
+$ sops updatekeys secrets/hosts/gibraltar/bugatti-nix-secrets.yaml # Repeat for all files that are referenced by that key
+```
+
 ## Features
 
 ### Security
