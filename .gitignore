@@ -4,6 +4,8 @@ result
 
 .act-secrets
 
+.direnv
+
 # OCI Keys
 terraform/.oci
 
