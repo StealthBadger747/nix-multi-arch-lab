@@ -156,6 +156,7 @@
             "${nixpkgs}/nixos/modules/virtualisation/proxmox-image.nix"
             ./modules/configs/common.nix
             ./modules/hosts/gibraltar/bugatti-nix/main.nix
+            ./modules/hosts/gibraltar/bugatti-nix/attic.nix
             ./modules/hosts/gibraltar/bugatti-nix/tailscale.nix
             sops-nix.nixosModules.sops
           ];
