@@ -79,6 +79,16 @@
             echo "This package can only be built on aarch64-linux systems"
             exit 1
           '';
+        proxmox-x86-linux-image = 
+          let 
+            config = self.nixosConfigurations.proxmox-base;
+          in
+          if system == "x86_64-linux"
+          then config.config.system.build.proxmoxImage
+          else nixpkgs.legacyPackages.${system}.runCommand "proxmox-image" {} ''
+            echo "This package can only be built on x86_64-linux systems"
+            exit 1
+          '';
       };
 
       # Dev shell is now per-system
@@ -101,6 +111,9 @@
         shellHook = ''
           echo "OCI CLI version: $(oci --version)"
           echo "Opentofu version: $(tofu version)"
+          echo "Available image builders:"
+          echo " - nix build .#oci-aarch64-image       # For Oracle Cloud (aarch64)"
+          echo " - nix build .#proxmox-x86-linux-image # For Proxmox (x86_64)"
 
           # Add the script to PATH
           export PATH="$PWD/scripts:$PATH"
@@ -122,6 +135,17 @@
             ./modules/hosts/oracle-cloud/base.nix
           ];
           specialArgs = { pkgs-unstable = mkPkgsUnstable "aarch64-linux"; };
+        };
+
+        # Base Proxmox x86-64
+        proxmox-base = nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          modules = [
+            "${nixpkgs}/nixos/modules/virtualisation/proxmox-image.nix"
+            ./modules/configs/common.nix
+            sops-nix.nixosModules.sops
+          ];
+          specialArgs = { pkgs-unstable = mkPkgsUnstable "x86_64-linux"; };
         };
 
         # Authentik system
