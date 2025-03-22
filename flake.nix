@@ -84,7 +84,7 @@
             config = self.nixosConfigurations.proxmox-base;
           in
           if system == "x86_64-linux"
-          then config.config.system.build.proxmoxImage
+          then config.config.system.build.VMA
           else nixpkgs.legacyPackages.${system}.runCommand "proxmox-image" {} ''
             echo "This package can only be built on x86_64-linux systems"
             exit 1
@@ -142,8 +142,7 @@
           system = "x86_64-linux";
           modules = [
             "${nixpkgs}/nixos/modules/virtualisation/proxmox-image.nix"
-            ./modules/configs/common.nix
-            sops-nix.nixosModules.sops
+            ./modules/hosts/ucaia/connors-system/main.nix
           ];
           specialArgs = { pkgs-unstable = mkPkgsUnstable "x86_64-linux"; };
         };
