@@ -6,6 +6,7 @@
       "https://cuda-maintainers.cachix.org?priority=3"
       "https://numtide.cachix.org?priority=4"
       "https://cache.flox.dev?priority=5"
+      "https://deploy-rs.cachix.org?priority=6"
     ];
 
     trusted-public-keys = [
@@ -14,6 +15,7 @@
       "cuda-maintainers.cachix.org-1:0dq3bujKpuEPMCX6U4WylrUDZ9JyUG0VpVZa7CNfq5E="
       "numtide.cachix.org-1:2ps1kLBUWjxIneOy1Ik6cQjb41X0iXVXeHigGmycPPE="
       "flox-cache-public-1:7F4OyH7ZCnFhcze3fJdfyXYLQw/aV7GEed86nQ7IsOs="
+      "deploy-rs.cachix.org-1:xfNobmiwF/vzvK1gpfediPwpdIP0rpDV2rYqx40zdSI="
     ];
 
     download-buffer-size = 500000000;
@@ -22,12 +24,11 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
+    determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/3";
     sops-nix.url = "github:Mic92/sops-nix";
     authentik-nix.url = "github:nix-community/authentik-nix";
-    deploy-rs = {
-      url = "github:serokell/deploy-rs";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    srvos.url = "github:nix-community/srvos";
+    deploy-rs.url = "github:serokell/deploy-rs";
     vulnix = {
       url = "github:flyingcircusio/vulnix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -35,8 +36,8 @@
     flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, nixpkgs-unstable, sops-nix, authentik-nix
-    , deploy-rs, vulnix, flake-utils }:
+  outputs = { self, nixpkgs, nixpkgs-unstable, determinate, sops-nix, authentik-nix
+    , srvos, deploy-rs, vulnix, flake-utils }:
     let
       # Systems we want to support
       supportedSystems = [ "x86_64-linux" "aarch64-linux" ];
@@ -179,8 +180,10 @@
             "${nixpkgs}/nixos/modules/virtualisation/proxmox-image.nix"
             ./modules/configs/common.nix
             ./modules/hosts/gibraltar/bugatti-nix/main.nix
-            ./modules/hosts/gibraltar/bugatti-nix/attic.nix
+            # ./modules/hosts/gibraltar/bugatti-nix/attic.nix
             ./modules/hosts/gibraltar/bugatti-nix/tailscale.nix
+            determinate.nixosModules.default
+            # srvos.nixosModules.roles-github-actions-runner
             sops-nix.nixosModules.sops
           ];
           specialArgs = { pkgs-unstable = mkPkgsUnstable "x86_64-linux"; };
