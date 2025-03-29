@@ -7,8 +7,9 @@ on:
 
 jobs:
   build-amd64:
-    name: Build (x86_64)
     runs-on: ubuntu-latest
+    resources:
+      cpu: 16
     steps:
       - name: Connect to Tailscale
         uses: tailscale/github-action@v3
