@@ -43,8 +43,13 @@ jobs:
       - name: Setup SSH Key
         run: |
           mkdir -p ~/.ssh
-          echo "$DEPLOY_SSH_KEY" > ~/.ssh/id_ed25519
+          # Write the key data with proper formatting
+          echo "-----BEGIN OPENSSH PRIVATE KEY-----" > ~/.ssh/id_ed25519
+          echo "$DEPLOY_SSH_KEY" | tr -d '\r' >> ~/.ssh/id_ed25519
+          echo "-----END OPENSSH PRIVATE KEY-----" >> ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
+          
+          # Add known hosts
           cat << 'EOF' >> ~/.ssh/known_hosts
           150.136.213.118 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPR9yQC1u8J1GIo8SToHGgDAkgnxhTYXoX6LOnqYUdfM
           100.64.0.28 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPDm5ArgQ8Ehj/PibOa1G9NlA3Wp87fXM8oOvLxwVUHu
@@ -52,8 +57,11 @@ jobs:
           EOF
           chmod 644 ~/.ssh/known_hosts
           
-          # Test connection to the builder
-          ssh erikp@100.64.0.28 echo "SSH connection successful"
+          # Check file contents (don't display the key, just verify its format)
+          head -n 1 ~/.ssh/id_ed25519
+          
+          # Try connection
+          ssh -v erikp@100.64.0.28 echo "SSH connection successful"
 
       - name: Deploy using remote builder
         env:
