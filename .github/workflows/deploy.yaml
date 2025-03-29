@@ -22,21 +22,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup QEMU
-        uses: docker/setup-qemu-action@v3
-        
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@main
         with:
           extra-conf: |
-            fallback = true
-            http-connections = 128
-            max-substitution-jobs = 128
-            extra-platforms = aarch64-linux
-            trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= system:5M8uBPjS68HTadSbeCs0Jiu0Z1tJBNdahtKBCXhl+Z0= nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs= numtide.cachix.org-1:2ps1kLBUWjxIneOy1Ik6cQjb41X0iXVXeHigGmycPPE=
+            experimental-features = nix-command flakes
       
       - name: Setup Flakehub Cache
-      - uses: DeterminateSystems/flakehub-cache-action@main
+        uses: DeterminateSystems/flakehub-cache-action@main
 
       - name: Configure SSH
         uses: 1password/load-secrets-action@v2
@@ -58,35 +51,17 @@ jobs:
           129.153.154.190 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKaH2Sp/sVQ9bhwLiaWg9P93grswjsfcNZfujwfQ/iri
           EOF
           chmod 644 ~/.ssh/known_hosts
-
-      - name: Build project (x86_64)
-        env:
-          NIX_SYSTEM: x86_64-linux
-        run: nix develop --accept-flake-config --command bash -c 'deploy ".#oci-headscale"'
-        # run: nix develop --system x86_64-linux --ignore-environment --keep NIX_SYSTEM --keep SOPS_AGE_KEY --command bash -c 'deploy ".#oci-headscale"'
-        # run: nix develop --system x86_64-linux --ignore-environment --keep NIX_SYSTEM --keep SOPS_AGE_KEY --accept-flake-config -c deploy .#gib-bugatti
-
-  # build-aarch64:
-  #   name: Build (aarch64)
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Connect to Tailscale
-  #       uses: tailscale/github-action@v3
-  #       with:
-  #         oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
-  #         oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
-  #         tags: tag:ci,arch:arm64
           
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v4
-        
-  #     - name: Install Nix
-  #       uses: DeterminateSystems/nix-installer-action@main
-        
-  #     - name: Set up QEMU
-  #       uses: docker/setup-qemu-action@v2
-  #       with:
-  #         platforms: arm64
-        
-  #     - name: Build project (aarch64)
-  #       run: nix build .#aarch64-linux
+          # Test connection to the builder
+          ssh erikp@100.64.0.28 echo "SSH connection successful"
+
+      - name: Deploy using remote builder
+        env:
+          SOPS_AGE_KEY: ${{ env.SOPS_AGE_KEY }}
+        run: |
+          # Build using deploy-rs with the remote store approach
+          nix develop --accept-flake-config --command deploy ".#oci-headscale" \
+            --eval-store auto \
+            --store ssh-ng://erikp@100.64.0.28 \
+            --builders "" \
+            --print-build-logs
