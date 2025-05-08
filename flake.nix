@@ -195,6 +195,7 @@
         oci-authentik = {
           hostname = "150.136.213.118";
           sshUser = "erikp";
+          remoteBuild = true;
           profiles.system = {
             user = "root";
             path = deploy-rs.lib."aarch64-linux".activate.nixos

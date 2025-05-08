@@ -54,13 +54,9 @@ jobs:
           # Test connection to the builder
           ssh erikp@100.64.0.28 echo "SSH connection successful"
 
-      - name: Deploy using remote builder
+      - name: Build and Deploy
         env:
           SOPS_AGE_KEY: ${{ env.SOPS_AGE_KEY }}
         run: |
-          # Build using deploy-rs with the remote store approach
-          nix develop --accept-flake-config --command deploy ".#oci-headscale" \
-            --eval-store auto \
-            --store ssh-ng://erikp@100.64.0.28 \
-            --builders "" \
-            --print-build-logs
+          # Use deploy-rs with --remote-build flag
+          nix develop --accept-flake-config --command deploy ".#oci-headscale"
