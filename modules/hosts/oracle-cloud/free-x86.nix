@@ -6,7 +6,7 @@ let
   timezone = "America/New_York";
 
   headplane_port = "3000";
-  headplanePkg = pkgs.callPackage ../../packages/headplane/headplane.nix { };
+  headplanePkg = pkgs.headplane;
 
   settingsFormat = pkgs.formats.yaml { };
   headscaleConfig = settingsFormat.generate "headscale-settings.yaml"
