@@ -42,7 +42,7 @@
     neofetch
   ];
 
-  boot.binfmt.emulatedSystems = ["aarch64-linux"];
+  boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
 
   virtualisation.containers.enable = true;
   virtualisation = {

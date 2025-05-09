@@ -18,15 +18,15 @@
       "deploy-rs.cachix.org-1:xfNobmiwF/vzvK1gpfediPwpdIP0rpDV2rYqx40zdSI="
     ];
 
-    download-buffer-size = 500000000;
+    download-buffer-size = 1000000000;
   };
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
-    determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/3";
     sops-nix.url = "github:Mic92/sops-nix";
-    authentik-nix.url = "github:nix-community/authentik-nix";
+    authentik-nix.url = "github:marcelcoding/authentik-nix";
+    # authentik-nix.url = "github:nix-community/authentik-nix";
     srvos.url = "github:nix-community/srvos";
     deploy-rs.url = "github:serokell/deploy-rs";
     vulnix = {
@@ -34,9 +34,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     flake-utils.url = "github:numtide/flake-utils";
+    headplane.url = "github:tale/headplane";
   };
 
-  outputs = { self, nixpkgs, nixpkgs-unstable, determinate, sops-nix, authentik-nix
+  outputs = { self, nixpkgs, nixpkgs-unstable, sops-nix, authentik-nix
     , srvos, deploy-rs, vulnix, flake-utils }:
     let
       # Systems we want to support
@@ -47,6 +48,10 @@
         import nixpkgs {
           inherit system;
           config.allowUnfree = true;
+          crossSystem = if system == "aarch64-linux" then {
+            config = "aarch64-unknown-linux-gnu";
+            system = "aarch64-linux";
+          } else null;
         };
 
       # Helper function to initialize pkgs-unstable
@@ -54,6 +59,10 @@
         import nixpkgs-unstable {
           inherit system;
           config.allowUnfree = true;
+          crossSystem = if system == "aarch64-linux" then {
+            config = "aarch64-unknown-linux-gnu";
+            system = "aarch64-linux";
+          } else null;
         };
     in flake-utils.lib.eachSystem supportedSystems (system: {
       checks.vulnix = {
@@ -180,10 +189,7 @@
             "${nixpkgs}/nixos/modules/virtualisation/proxmox-image.nix"
             ./modules/configs/common.nix
             ./modules/hosts/gibraltar/bugatti-nix/main.nix
-            # ./modules/hosts/gibraltar/bugatti-nix/attic.nix
             ./modules/hosts/gibraltar/bugatti-nix/tailscale.nix
-            determinate.nixosModules.default
-            # srvos.nixosModules.roles-github-actions-runner
             sops-nix.nixosModules.sops
           ];
           specialArgs = { pkgs-unstable = mkPkgsUnstable "x86_64-linux"; };
@@ -195,12 +201,14 @@
         oci-authentik = {
           hostname = "150.136.213.118";
           sshUser = "erikp";
-          remoteBuild = true;
+          fastConnection = true;
+          autoRollback = false;  # Temporarily disabled for debugging
           profiles.system = {
             user = "root";
             path = deploy-rs.lib."aarch64-linux".activate.nixos
               self.nixosConfigurations.oci-authentik;
             magicRollback = true;
+            sshOpts = [ "-o" "StrictHostKeyChecking=no" ];
           };
         };
 
@@ -228,9 +236,6 @@
       };
 
       # Deployment checks
-      checks.aarch64-linux =
-        deploy-rs.lib."aarch64-linux".deployChecks self.deploy;
-      checks.x86_64-linux =
-        deploy-rs.lib."x86_64-linux".deployChecks self.deploy;
+      checks = builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy) deploy-rs.lib;
     };
 }

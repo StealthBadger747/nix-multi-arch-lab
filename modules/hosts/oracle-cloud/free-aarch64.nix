@@ -191,7 +191,7 @@ in {
   virtualisation.oci-containers.backend = "podman";
   virtualisation.oci-containers.containers = {
     foundryvtt = {
-      image = "felddy/foundryvtt:release";
+      image = "docker.io/felddy/foundryvtt@sha256:1bfeaf21c2cfd5f8657c2e559901a729e2b0a5368fbf425b1d7a865dd1b7e816";
       autoStart = true;
       ports = [ "127.0.0.1:${toString foundry_port}:30000" ];
       environmentFiles = [ config.sops.secrets.foundryvtt.path ];
@@ -208,6 +208,7 @@ in {
         FOUNDRY_TELEMETRY = "true";
         TIMEZONE = timezone;
       };
+      extraOptions = ["--no-healthcheck"];
     };
   };
 
