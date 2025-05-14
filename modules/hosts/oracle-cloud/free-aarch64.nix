@@ -10,8 +10,13 @@ let
   foundry_port = 30000;
   timezone = "America/New_York";
 in {
+  imports = [
+    ../../services/yctod-email-queue.nix
+  ];
 
-  environment.systemPackages = with pkgs; [ ];
+  environment.systemPackages = with pkgs; [
+    (import ../../packages/ycotd-email-processor { inherit pkgs; })
+  ];
 
   sops = {
     defaultSopsFile = ../../../secrets/secrets.yaml;
@@ -52,6 +57,12 @@ in {
         owner = "root";
         group = "root";
         mode = "0400";
+      };
+      yctod-email = {
+        owner = "erikp";
+        group = "users";
+        mode = "0400";
+        restartUnits = [ "yctod-email-queue.service" ];
       };
     };
   };
@@ -166,6 +177,18 @@ in {
         };
         disable_startup_analytics = true;
         avatars = "initials";
+      };
+    };
+
+    yctod-email-queue = {
+      enable = true;
+      environmentFile = config.sops.secrets.yctod-email.path;
+      serviceConfig = {
+        Type = "simple";
+        User = "erikp";
+        Group = "users";
+        Restart = "always";
+        RestartSec = "10s";
       };
     };
   };

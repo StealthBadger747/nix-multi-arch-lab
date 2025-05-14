@@ -34,11 +34,14 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     flake-utils.url = "github:numtide/flake-utils";
-    headplane.url = "github:tale/headplane";
+    headplane = {
+      url = "github:StealthBadger747/headplane/erikp/implement-path-loader";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = { self, nixpkgs, nixpkgs-unstable, sops-nix, authentik-nix
-    , srvos, deploy-rs, vulnix, flake-utils }:
+    , srvos, deploy-rs, vulnix, flake-utils, headplane }:
     let
       # Systems we want to support
       supportedSystems = [ "x86_64-linux" "aarch64-linux" ];
@@ -178,8 +181,17 @@
             ./modules/configs/common.nix
             ./modules/hosts/oracle-cloud/free-x86.nix
             sops-nix.nixosModules.sops
+            headplane.nixosModules.headplane
           ];
-          specialArgs = { pkgs-unstable = mkPkgsUnstable "x86_64-linux"; };
+          specialArgs = { 
+            pkgs-unstable = mkPkgsUnstable "x86_64-linux";
+            inherit headplane;
+          };
+          pkgs = import nixpkgs {
+            system = "x86_64-linux";
+            config.allowUnfree = true;
+            overlays = [ headplane.overlays.default ];
+          };
         };
 
         # Bugatti Proxmox Nix

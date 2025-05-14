@@ -64,6 +64,27 @@
         "type": "github"
       }
     },
+    "devshell": {
+      "inputs": {
+        "nixpkgs": [
+          "headplane",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1741473158,
+        "narHash": "sha256-kWNaq6wQUbUMlPgw8Y+9/9wP0F8SHkjy24/mN3UAppg=",
+        "owner": "numtide",
+        "repo": "devshell",
+        "rev": "7c9e793ebe66bcba8292989a68c0419b737a22a0",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "devshell",
+        "type": "github"
+      }
+    },
     "flake-compat": {
       "flake": false,
       "locked": {
@@ -202,6 +223,47 @@
       "original": {
         "owner": "numtide",
         "repo": "flake-utils",
+        "type": "github"
+      }
+    },
+    "flake-utils_3": {
+      "inputs": {
+        "systems": "systems_4"
+      },
+      "locked": {
+        "lastModified": 1731533236,
+        "narHash": "sha256-l0KFg5HjrsfsO/JpG+r7fRrqm12kzFHyUHqHCVpMMbI=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "11707dc2f618dd54ca8739b309ec4fc024de578b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "type": "github"
+      }
+    },
+    "headplane": {
+      "inputs": {
+        "devshell": "devshell",
+        "flake-utils": "flake-utils_3",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1746928452,
+        "narHash": "sha256-/YktpqWlTk+gUKcFxZhNEabUsWLImGmge4YLgNS3hMQ=",
+        "owner": "StealthBadger747",
+        "repo": "headplane",
+        "rev": "0433ee4d5c43b48339340cd470baf024681fcadc",
+        "type": "github"
+      },
+      "original": {
+        "owner": "StealthBadger747",
+        "ref": "erikp/implement-path-loader",
+        "repo": "headplane",
         "type": "github"
       }
     },
@@ -397,6 +459,7 @@
         "authentik-nix": "authentik-nix",
         "deploy-rs": "deploy-rs",
         "flake-utils": "flake-utils_2",
+        "headplane": "headplane",
         "nixpkgs": "nixpkgs_3",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "sops-nix": "sops-nix",
@@ -471,6 +534,21 @@
       }
     },
     "systems_3": {
+      "locked": {
+        "lastModified": 1681028828,
+        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
+        "owner": "nix-systems",
+        "repo": "default",
+        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-systems",
+        "repo": "default",
+        "type": "github"
+      }
+    },
+    "systems_4": {
       "locked": {
         "lastModified": 1681028828,
         "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
