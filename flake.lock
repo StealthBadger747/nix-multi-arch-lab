@@ -464,7 +464,8 @@
         "nixpkgs-unstable": "nixpkgs-unstable",
         "sops-nix": "sops-nix",
         "srvos": "srvos",
-        "vulnix": "vulnix"
+        "vulnix": "vulnix",
+        "ycotd-python-queue": "ycotd-python-queue"
       }
     },
     "sops-nix": {
@@ -649,6 +650,23 @@
         "owner": "flyingcircusio",
         "repo": "vulnix",
         "type": "github"
+      }
+    },
+    "ycotd-python-queue": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1,
+        "narHash": "sha256-oNAjuBh0SMNAi2ovtJxuHJudDs3rL5TojHagNRiCQ10=",
+        "path": "./ycotd-python-queue",
+        "type": "path"
+      },
+      "original": {
+        "path": "./ycotd-python-queue",
+        "type": "path"
       }
     }
   },

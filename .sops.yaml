@@ -26,3 +26,10 @@ creation_rules:
       - *oci_headscale
       - *erik_mbp
       - *gha_ci
+
+  - path_regex: secrets/hosts/oracle-cloud/free-aarch64.yaml$
+    key_groups:
+    - age:
+      - *oci_authentik
+      - *erik_mbp
+      - *gha_ci

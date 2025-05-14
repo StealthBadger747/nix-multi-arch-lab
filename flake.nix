@@ -38,10 +38,14 @@
       url = "github:StealthBadger747/headplane/erikp/implement-path-loader";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    ycotd-python-queue = {
+      url = "path:./ycotd-python-queue";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = { self, nixpkgs, nixpkgs-unstable, sops-nix, authentik-nix
-    , srvos, deploy-rs, vulnix, flake-utils, headplane }:
+    , srvos, deploy-rs, vulnix, flake-utils, headplane, ycotd-python-queue }:
     let
       # Systems we want to support
       supportedSystems = [ "x86_64-linux" "aarch64-linux" ];
@@ -193,7 +197,15 @@
             sops-nix.nixosModules.sops
             authentik-nix.nixosModules.default
           ];
-          specialArgs = { pkgs-unstable = mkPkgsUnstable "aarch64-linux"; };
+          specialArgs = { 
+            pkgs-unstable = mkPkgsUnstable "aarch64-linux";
+            inherit ycotd-python-queue;
+          };
+          pkgs = import nixpkgs {
+            system = "aarch64-linux";
+            config.allowUnfree = true;
+            overlays = [ ycotd-python-queue.overlays.default ];
+          };
         };
 
         # Headscale system

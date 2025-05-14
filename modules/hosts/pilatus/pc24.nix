@@ -50,7 +50,7 @@ in {
     tailscale.enable = true;
 
     inadyn = {
-      enable = true;
+      enable = false;
       settings = {
         allow-ipv6 = true;
         custom."namecheap" = {
@@ -65,7 +65,7 @@ in {
     };
 
     nginx = {
-      enable = true;
+      enable = false;
       recommendedGzipSettings = true;
       recommendedOptimisation = true;
       recommendedTlsSettings = true;

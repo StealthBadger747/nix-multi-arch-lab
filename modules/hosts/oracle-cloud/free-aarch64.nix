@@ -11,11 +11,7 @@ let
   timezone = "America/New_York";
 in {
   imports = [
-    ../../services/yctod-email-queue.nix
-  ];
-
-  environment.systemPackages = with pkgs; [
-    (import ../../packages/ycotd-email-processor { inherit pkgs; })
+    ../../services/ycotd-python-queue.nix
   ];
 
   sops = {
@@ -58,11 +54,12 @@ in {
         group = "root";
         mode = "0400";
       };
-      yctod-email = {
-        owner = "erikp";
-        group = "users";
+      ycotd-email = {
+        sopsFile = ../../../secrets/hosts/oracle-cloud/free-x86.yaml;
+        owner = "ycotd-email";
+        group = "ycotd-email";
         mode = "0400";
-        restartUnits = [ "yctod-email-queue.service" ];
+        restartUnits = [ "ycotd-python-queue.service" ];
       };
     };
   };
@@ -180,16 +177,9 @@ in {
       };
     };
 
-    yctod-email-queue = {
+    ycotd-python-queue = {
       enable = true;
-      environmentFile = config.sops.secrets.yctod-email.path;
-      serviceConfig = {
-        Type = "simple";
-        User = "erikp";
-        Group = "users";
-        Restart = "always";
-        RestartSec = "10s";
-      };
+      environmentFile = config.sops.secrets.ycotd-email.path;
     };
   };
   users.users.authentik = {

@@ -48,6 +48,7 @@ jobs:
           150.136.213.118 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPR9yQC1u8J1GIo8SToHGgDAkgnxhTYXoX6LOnqYUdfM
           100.64.0.28 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPDm5ArgQ8Ehj/PibOa1G9NlA3Wp87fXM8oOvLxwVUHu
           129.153.154.190 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKaH2Sp/sVQ9bhwLiaWg9P93grswjsfcNZfujwfQ/iri
+          100.64.0.46 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPuv8Q8cVLxIGMIIkNBGPC/dh4fTLHcWkVCaWhOtn1Ls
           EOF
           chmod 644 ~/.ssh/known_hosts
           
@@ -59,4 +60,4 @@ jobs:
           SOPS_AGE_KEY: ${{ env.SOPS_AGE_KEY }}
         run: |
           # Use deploy-rs with --remote-build flag
-          nix develop --accept-flake-config --command deploy ".#oci-headscale"
+          nix develop --accept-flake-config --skip-checks --command deploy ".#oci-headscale"
