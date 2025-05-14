@@ -7,10 +7,6 @@ let
 in {
   nixpkgs.config.allowUnfree = true;
 
-  imports = [
-    # ./nvidia-headless.nix
-  ];
-
   sops = {
     defaultSopsFile = ../../../secrets/secrets.yaml;
     defaultSopsFormat = "yaml";
@@ -50,7 +46,7 @@ in {
     tailscale.enable = true;
 
     inadyn = {
-      enable = false;
+      enable = true;
       settings = {
         allow-ipv6 = true;
         custom."namecheap" = {
@@ -65,7 +61,7 @@ in {
     };
 
     nginx = {
-      enable = false;
+      enable = true;
       recommendedGzipSettings = true;
       recommendedOptimisation = true;
       recommendedTlsSettings = true;

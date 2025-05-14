@@ -10,9 +10,9 @@ let
   foundry_port = 30000;
   timezone = "America/New_York";
 in {
-  imports = [
-    ../../services/ycotd-python-queue.nix
-  ];
+  # imports = [
+  #   (import ../../../ycotd-python-queue).nixosModules.ycotd-python-queue
+  # ];
 
   sops = {
     defaultSopsFile = ../../../secrets/secrets.yaml;
@@ -55,7 +55,7 @@ in {
         mode = "0400";
       };
       ycotd-email = {
-        sopsFile = ../../../secrets/hosts/oracle-cloud/free-x86.yaml;
+        sopsFile = ../../../secrets/hosts/oracle-cloud/free-aarch64.yaml;
         owner = "ycotd-email";
         group = "ycotd-email";
         mode = "0400";

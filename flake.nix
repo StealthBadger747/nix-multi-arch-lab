@@ -196,15 +196,11 @@
             ./modules/hosts/oracle-cloud/free-aarch64.nix
             sops-nix.nixosModules.sops
             authentik-nix.nixosModules.default
+            ycotd-python-queue.nixosModules.ycotd-python-queue
           ];
           specialArgs = { 
             pkgs-unstable = mkPkgsUnstable "aarch64-linux";
             inherit ycotd-python-queue;
-          };
-          pkgs = import nixpkgs {
-            system = "aarch64-linux";
-            config.allowUnfree = true;
-            overlays = [ ycotd-python-queue.overlays.default ];
           };
         };
 
@@ -255,6 +251,7 @@
             path = deploy-rs.lib."aarch64-linux".activate.nixos
               self.nixosConfigurations.oci-authentik;
             magicRollback = true;
+            remoteBuild = true;
             sshOpts = [ "-o" "StrictHostKeyChecking=no" ];
           };
         };

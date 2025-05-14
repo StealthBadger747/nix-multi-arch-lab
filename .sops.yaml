@@ -9,7 +9,6 @@ creation_rules:
     key_groups:
     - age:
       - *bugatti_nix
-      
       - *oci_headscale
       - *oci_authentik
       - *erik_mbp
