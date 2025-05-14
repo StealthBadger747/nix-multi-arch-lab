@@ -1,4 +1,4 @@
-{ config, pkgs, pkgs-unstable, lib, ... }:
+{ config, pkgs, pkgs-unstable, lib, nixarr, ... }:
 let
   host = "pilatus";
   tld = "parawell.cloud";
@@ -6,6 +6,10 @@ let
   timezone = "America/Los_Angeles";
 in {
   nixpkgs.config.allowUnfree = true;
+
+  imports = [
+    ./pc24/zfs.nix
+  ];
 
   sops = {
     defaultSopsFile = ../../../secrets/secrets.yaml;
@@ -77,6 +81,25 @@ in {
           root = "/var/www/acme-challenge";
         };
       };
+    };
+
+    plex = {
+      enable = true;
+      dataDir = "/APPS/plex/config/Library/Application Support";
+      package = pkgs-unstable.plex;
+      group = "media";
+      openFirewall = true;
+    };
+  };
+
+  nixarr = {
+    enable = true;
+    mediaUsers = [ "plex" "erikp" ];
+    radarr = {
+      enable = true;
+    };
+    sonarr = {
+      enable = true;
     };
   };
 

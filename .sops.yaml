@@ -2,6 +2,7 @@ keys:
   - &bugatti_nix age1q3575mlegx4mzxtmzey5rzg9nwrnwlc9mlr5jeqcfltnzt6gwcqq6jdrka
   - &oci_headscale age1qwuz9ud98q82xpresskwkgd20r35u0valpddq973h2a9dad6cyjqxqmzt2
   - &oci_authentik age1hj5dyl0wzlq92ms2hrut6he05dqv0pknlv7wpyv2jywhz2hqwe9qgpt5dl
+  - &pc_24 age1y2g734aqge4lsvmf8dw6s5rc8rkd0scmfwvxm3nlat6tu7y60a2s94yn0l
   - &erik_mbp age17fq29yexw9rf30je5xp86hdda6tgug52sax7vy0af2sngempqv0qwhe4vr
   - &gha_ci age1tpupgevxd2d50zv95c098c3xkfqed4zk46h8fag9stadj75dvu0q3wx0mk
 creation_rules:
@@ -13,6 +14,7 @@ creation_rules:
       - *oci_authentik
       - *erik_mbp
       - *gha_ci
+      - *pc_24
   - path_regex: secrets/hosts/gibraltar/bugatti-nix-secrets\.yaml$
     key_groups:
     - age:

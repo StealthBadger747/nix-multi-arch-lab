@@ -1,35 +1,28 @@
-{ config, pkgs, pkgs-unstable, lib, ... }:
+{ config, pkgs, lib, ... }:
 
 {
-  # Minimal NVIDIA driver configuration for headless Plex transcoding
-  hardware = {
-    graphics = {
-      enable = true;
-      extraPackages = with pkgs; [nvidia-vaapi-driver];
-    };
-    nvidia = {
-      # Use the proprietary NVIDIA driver package - required for NVENC
-      package = config.boot.kernelPackages.nvidiaPackages.stable;
-      # Use proprietary drivers for better transcoding performance
-      open = false;
-      # Enable persistent mode for better performance in server environments
-      nvidiaPersistenced = true;
-      powerManagement.enable = true;
-    };
+  boot.kernelParams = [ "nvidia_drm.fbdev=0" ];
+  boot.initrd.kernelModules = [ "nvidia" "nvidia-uvm" "nvidia-drm" ];
+  # boot.blacklistedKernelModules = [ "nouveau" ];
+  # boot.kernelModules = [ "nvidia" "nvidia-uvm" "nvidia-drm" ];
+  boot.extraModulePackages = [ config.boot.kernelPackages.nvidia_x11.bin ];
+
+  hardware.nvidia = {
+    package = config.boot.kernelPackages.nvidiaPackages.stable;
+    open = false;
+    nvidiaPersistenced = true;
+    powerManagement.enable = false;
+    modesetting.enable = true;   # explicit, though it defaults to false
   };
 
   environment.systemPackages = with pkgs; [
+    (config.boot.kernelPackages.nvidiaPackages.stable).bin
     cudatoolkit
     nvidia-container-toolkit
     nvtopPackages.nvidia
+    # nvidia-x11 nvidia-settings  # optional in pure headless setups
+    nvidia-vaapi-driver         # if you want VA-API wrappers
   ];
-  
-  # # Only load the necessary NVIDIA modules
-  # boot.kernelModules = [ "nvidia" "nvidia-uvm" ];
-  # # Blacklist nouveau to avoid conflicts
-  # boot.blacklistedKernelModules = [ "nouveau" ];
-  
-  # boot.extraModulePackages = [ config.boot.kernelPackages.nvidia_x11.bin ];
-  
-  # services.xserver.videoDrivers = [ "nvidia" ];
+
+  services.xserver.enable = false;
 }

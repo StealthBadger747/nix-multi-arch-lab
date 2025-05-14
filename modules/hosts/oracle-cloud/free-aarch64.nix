@@ -61,6 +61,13 @@ in {
         mode = "0400";
         restartUnits = [ "ycotd-python-queue.service" ];
       };
+      attic-env = {
+        sopsFile = ../../../secrets/hosts/oracle-cloud/free-aarch64.yaml;
+        owner = "atticd";
+        group = "atticd";
+        mode = "0400";
+        restartUnits = [ "atticd.service" ];
+      };
     };
   };
 
@@ -86,6 +93,22 @@ in {
     tailscale = {
       enable = true;
       useRoutingFeatures = "both";
+    };
+
+    atticd = {
+      enable = true;
+
+      environmentFile = config.sops.secrets.attic-env.path;
+      settings = {
+        listen = "0.0.0.0:8080";
+        # database = {
+        #   url = "sqlite:///var/lib/attic/db.sqlite";
+        # };
+        # storage = {
+        #   type = "local";
+        #   path = "/var/lib/attic/storage";
+        # };
+      };
     };
 
     openssh = {
@@ -230,7 +253,7 @@ in {
     nameservers = [ "1.1.1.1" "8.8.4.4" "8.8.8.8" "9.9.9.9" ];
     firewall = {
       enable = true;
-      allowedTCPPorts = [ 22 80 443 ];
+      allowedTCPPorts = [ 22 80 443 8080 ];
       allowedUDPPorts = [ 51820 ];
     };
 

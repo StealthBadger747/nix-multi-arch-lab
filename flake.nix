@@ -42,10 +42,14 @@
       url = "path:./ycotd-python-queue";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    nixarr = {
+      url = "github:rasmus-kirk/nixarr";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
+    };
   };
 
   outputs = { self, nixpkgs, nixpkgs-unstable, sops-nix, authentik-nix
-    , srvos, deploy-rs, vulnix, flake-utils, headplane, ycotd-python-queue }:
+    , srvos, deploy-rs, vulnix, flake-utils, headplane, ycotd-python-queue, nixarr }:
     let
       # Systems we want to support
       supportedSystems = [ "x86_64-linux" "aarch64-linux" ];
@@ -183,8 +187,13 @@
             ./modules/hosts/pilatus/pc24.nix
             ./modules/hosts/pilatus/nvidia-headless.nix
             sops-nix.nixosModules.sops
+            nixarr.nixosModules.default
+            "${nixpkgs-unstable}/nixos/modules/services/misc/recyclarr.nix"
           ];
-          specialArgs = { pkgs-unstable = mkPkgsUnstable "x86_64-linux"; };
+          specialArgs = {
+            pkgs-unstable = mkPkgsUnstable "x86_64-linux";
+            inherit nixarr;
+          };
         };
         
         # Authentik system
