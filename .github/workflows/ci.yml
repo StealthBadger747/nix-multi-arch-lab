@@ -1,0 +1,67 @@
+name: Headplane CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  lint-format-typecheck-test:
+    name: Lint, Format, Typecheck & Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10 # Match version from package.json/flake
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22' # Match version from flake (pkgs.nodejs-slim_22)
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint and Format Check (Biome)
+        run: pnpm exec biome ci . # 'ci' command checks formatting and linting
+
+      - name: Type Check (TypeScript)
+        run: pnpm run typecheck # Assumes 'typecheck' script in package.json runs 'tsc'
+
+      - name: Run Tests (Vitest)
+        run: pnpm run test # Assumes 'test' script in package.json runs 'vitest run'
+
+  nix-build:
+    name: Nix Flake Build & Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v27
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable # Or your preferred channel
+
+      - name: Enable Flakes and Nix command
+        run: |
+          echo "experimental-features = nix-command flakes" | sudo tee -a /etc/nix/nix.conf
+          sudo systemctl restart nix-daemon
+
+      - name: Check Nix Flake
+        run: nix flake check --all-systems --accept-flake-config
+
+      - name: Build Headplane Packages (Linux)
+        run: |
+          nix build .#headplane --accept-flake-config
+          nix build .#headplane-agent --accept-flake-config
+          # Add other specific packages or checks if needed 

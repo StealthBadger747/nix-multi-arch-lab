@@ -102,6 +102,17 @@
             echo "This package can only be built on x86_64-linux systems"
             exit 1
           '';
+
+        pc24-proxmox-image = 
+          let 
+            config = self.nixosConfigurations.pc24-proxmox;
+          in
+          if system == "x86_64-linux"
+          then config.config.system.build.VMA
+          else nixpkgs.legacyPackages.${system}.runCommand "pc24-proxmox-image" {} ''
+            echo "This package can only be built on x86_64-linux systems"
+            exit 1
+          '';
       };
 
       # Dev shell is now per-system
@@ -160,6 +171,18 @@
           specialArgs = { pkgs-unstable = mkPkgsUnstable "x86_64-linux"; };
         };
 
+        pc24-proxmox = nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          modules = [
+            "${nixpkgs}/nixos/modules/virtualisation/proxmox-image.nix"
+            ./modules/configs/common.nix
+            ./modules/hosts/pilatus/pc24.nix
+            ./modules/hosts/pilatus/nvidia-headless.nix
+            sops-nix.nixosModules.sops
+          ];
+          specialArgs = { pkgs-unstable = mkPkgsUnstable "x86_64-linux"; };
+        };
+        
         # Authentik system
         oci-authentik = nixpkgs.lib.nixosSystem {
           system = "aarch64-linux";
@@ -235,6 +258,17 @@
           };
         };
 
+        pc24-proxmox = {
+          hostname = "100.64.0.46";
+          sshUser = "erikp";
+          profiles.system = {
+            user = "root";
+            path = deploy-rs.lib."x86_64-linux".activate.nixos
+              self.nixosConfigurations.pc24-proxmox;
+            magicRollback = true;
+          };
+        };
+
         gib-bugatti = {
           hostname = "100.64.0.28";
           sshUser = "erikp";
@@ -243,6 +277,7 @@
             path = deploy-rs.lib."x86_64-linux".activate.nixos
               self.nixosConfigurations.bugatti-proxmox-nix;
             magicRollback = true;
+            # remoteBuild = true;
           };
         };
       };

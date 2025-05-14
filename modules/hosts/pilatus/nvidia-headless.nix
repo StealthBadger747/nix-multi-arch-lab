@@ -17,13 +17,19 @@
       powerManagement.enable = true;
     };
   };
+
+  environment.systemPackages = with pkgs; [
+    cudatoolkit
+    nvidia-container-toolkit
+    nvtopPackages.nvidia
+  ];
   
-  # Only load the necessary NVIDIA modules
-  boot.kernelModules = [ "nvidia" "nvidia-uvm" ];
-  # Blacklist nouveau to avoid conflicts
-  boot.blacklistedKernelModules = [ "nouveau" ];
+  # # Only load the necessary NVIDIA modules
+  # boot.kernelModules = [ "nvidia" "nvidia-uvm" ];
+  # # Blacklist nouveau to avoid conflicts
+  # boot.blacklistedKernelModules = [ "nouveau" ];
   
-  boot.extraModulePackages = [ config.boot.kernelPackages.nvidia_x11.bin ];
+  # boot.extraModulePackages = [ config.boot.kernelPackages.nvidia_x11.bin ];
   
-  services.xserver.videoDrivers = [ "nvidia" ];
+  # services.xserver.videoDrivers = [ "nvidia" ];
 }

@@ -6,6 +6,9 @@ result
 
 .direnv
 
+.env
+*.diff
+
 # OCI Keys
 terraform/.oci
 
