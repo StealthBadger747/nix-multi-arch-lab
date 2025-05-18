@@ -97,17 +97,18 @@ in {
 
     atticd = {
       enable = true;
-
+      user = "atticd";
+      group = "atticd";
       environmentFile = config.sops.secrets.attic-env.path;
       settings = {
-        listen = "0.0.0.0:8080";
-        # database = {
-        #   url = "sqlite:///var/lib/attic/db.sqlite";
-        # };
-        # storage = {
-        #   type = "local";
-        #   path = "/var/lib/attic/storage";
-        # };
+        listen = "100.64.0.31:8080";
+        database = {
+          url = "sqlite:///var/lib/atticd/db.sqlite";
+        };
+        storage = {
+          type = "local";
+          path = "/var/lib/atticd/storage";
+        };
       };
     };
 
@@ -213,6 +214,14 @@ in {
     shell = pkgs.bash;
   };
   users.groups.authentik = { };
+  users.users.atticd = {
+    isSystemUser = true;
+    group = "atticd";
+    home = "/var/lib/atticd";
+    description = "Attic Server User";
+    shell = pkgs.bash;
+  };
+  users.groups.atticd = { };
 
   virtualisation.containers.enable = true;
   virtualisation = {
