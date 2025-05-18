@@ -1,4 +1,4 @@
-name: Build
+name: Build & Deploy
 
 on:
   pull_request:
@@ -39,7 +39,7 @@ jobs:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
           SOPS_AGE_KEY: "op://Github_Actions/nix_age_secret/private_key"
 
-      - name: Setup SSH Key
+      - name: Setup SSH Keys
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
@@ -51,13 +51,13 @@ jobs:
           100.64.0.46 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPuv8Q8cVLxIGMIIkNBGPC/dh4fTLHcWkVCaWhOtn1Ls
           EOF
           chmod 644 ~/.ssh/known_hosts
-          
-          # Test connection to the builder
-          ssh erikp@100.64.0.28 echo "SSH connection successful"
 
-      - name: Build and Deploy
+      - name: Build and Deploy Authentik Nix
         env:
           SOPS_AGE_KEY: ${{ env.SOPS_AGE_KEY }}
         run: |
+          # Test connection to the builder
+          ssh erikp@150.136.213.118 echo "SSH connection successful"
+
           # Use deploy-rs with --remote-build flag
-          nix develop --accept-flake-config --skip-checks --command deploy ".#oci-headscale"
+          nix develop --accept-flake-config --command deploy --remote-build --skip-checks ".#oci-authentik"
