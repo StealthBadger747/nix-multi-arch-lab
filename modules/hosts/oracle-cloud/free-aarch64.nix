@@ -102,9 +102,9 @@ in {
       environmentFile = config.sops.secrets.attic-env.path;
       settings = {
         listen = "100.64.0.31:8080";
-        database = {
-          url = "sqlite:///var/lib/atticd/db.sqlite";
-        };
+        # database = {
+        #   url = "sqlite:///var/lib/atticd/db.sqlite";
+        # };
         storage = {
           type = "local";
           path = "/var/lib/atticd/storage";
