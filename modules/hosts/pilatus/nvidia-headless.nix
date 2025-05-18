@@ -3,8 +3,8 @@
 {
   boot.kernelParams = [ "nvidia_drm.fbdev=0" ];
   boot.initrd.kernelModules = [ "nvidia" "nvidia-uvm" "nvidia-drm" ];
-  # boot.blacklistedKernelModules = [ "nouveau" ];
-  # boot.kernelModules = [ "nvidia" "nvidia-uvm" "nvidia-drm" ];
+  boot.blacklistedKernelModules = [ "nouveau" ];
+  boot.kernelModules = [ "nvidia" "nvidia-uvm" "nvidia-drm" ];
   boot.extraModulePackages = [ config.boot.kernelPackages.nvidia_x11.bin ];
 
   hardware.nvidia = {
