@@ -11,6 +11,10 @@ in {
     ./pc24/zfs.nix
   ];
 
+  environment.systemPackages = with pkgs; [
+    attic-client
+  ];
+
   sops = {
     defaultSopsFile = ../../../secrets/secrets.yaml;
     defaultSopsFormat = "yaml";

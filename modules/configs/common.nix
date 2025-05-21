@@ -37,6 +37,8 @@
     polkit
     cachix
     sops
+
+    attic-client
   ];
 
   boot.tmp.cleanOnBoot = true;
