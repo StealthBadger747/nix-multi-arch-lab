@@ -9,6 +9,7 @@ in {
 
   imports = [
     ./pc24/zfs.nix
+    ../../overlays/nixarr/qbittorrent.nix
   ];
 
   environment.systemPackages = with pkgs; [
@@ -33,7 +34,17 @@ in {
         group = "acme";
         mode = "0400";
       };
+      airvpn-san-jose-imai-conf = {
+        sopsFile = ../../../secrets/hosts/pilatus/pc24.yaml;
+        owner = "root";
+        group = "root";
+        mode = "0400";
+      };
     };
+  };
+
+  boot.kernel.sysctl = {
+    "net.ipv6.bindv6only" = "0";
   };
 
   security.polkit.enable = true;
@@ -94,16 +105,56 @@ in {
       group = "media";
       openFirewall = true;
     };
+
+    flaresolverr = {
+      enable = true;
+      package = pkgs-unstable.flaresolverr;
+      openFirewall = true;
+    };
   };
 
   nixarr = {
     enable = true;
     mediaUsers = [ "plex" "erikp" ];
+    mediaDir = "/BIGBOY/nixarr/media";
+    vpn = {
+      enable = true;
+      wgConf = config.sops.secrets.airvpn-san-jose-imai-conf.path;
+      openTcpPorts = [ 12931 ];
+      openUdpPorts = [ 12931 ];
+    };
     radarr = {
       enable = true;
+      package = pkgs-unstable.radarr;
+      stateDir = "/APPS/arr-apps/radarr";
+      openFirewall = true;
     };
     sonarr = {
       enable = true;
+      package = pkgs-unstable.sonarr;
+      stateDir = "/APPS/arr-apps/sonarr";
+      openFirewall = true;
+    };
+    lidarr = {
+      enable = true;
+      package = pkgs-unstable.lidarr;
+      stateDir = "/APPS/arr-apps/lidarr";
+      openFirewall = true;
+    };
+    prowlarr = {
+      enable = true;
+      package = pkgs-unstable.prowlarr;
+      stateDir = "/APPS/arr-apps/prowlarr";
+      openFirewall = true;
+    };
+    qbittorrent = {
+      enable = true;
+      package = pkgs-unstable.qbittorrent-nox;
+      stateDir = "/APPS/arr-apps/qbittorrent";
+      openFirewall = true;
+      vpn.enable = true;
+      webUIPort = 10095;
+      btPort = 12931;
     };
   };
 

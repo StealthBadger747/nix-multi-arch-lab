@@ -15,6 +15,12 @@ creation_rules:
       - *erik_mbp
       - *gha_ci
       - *pc_24
+  - path_regex: secrets/hosts/pilatus/pc24\.yaml$
+    key_groups:
+    - age:
+      - *erik_mbp
+      - *gha_ci
+      - *pc_24
   - path_regex: secrets/hosts/gibraltar/bugatti-nix-secrets\.yaml$
     key_groups:
     - age:
