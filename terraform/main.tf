@@ -21,34 +21,27 @@ data "oci_objectstorage_bucket" "image_bucket" {
   namespace      = var.namespace
 }
 
+locals {
+  nixos_aarch64_path = "../result/nixos.qcow2"
+}
+
 # Resource to upload the image to the bucket
-resource "oci_objectstorage_object" "nixos_image" {
+resource "oci_objectstorage_object" "nixos_aarch64" {
   bucket    = data.oci_objectstorage_bucket.image_bucket.name
   namespace = var.namespace
   object    = "nixos.qcow2"
-  source    = "./result/nixos.qcow2"
+  source    = local.nixos_aarch64_path
 
-  # Add content_md5 to force re-upload if the local file changes
-  content_md5 = base64encode(filemd5("./result/nixos.qcow2"))
-
-  # Use metadata to store the hex-encoded MD5 for change detection
-  metadata = {
-    md5_hex = filemd5("./result/nixos.qcow2")
+  lifecycle {
+    ignore_changes = [
+      content_md5,
+      metadata,
+    ]
   }
-
-  # # Add a lifecycle rule to handle errors
-  # lifecycle {
-  #   ignore_changes = [content_md5]
-  # }
-}
-
-# Output the MD5 hash for reference
-output "nixos_image_md5" {
-  value = filemd5("./result/nixos.qcow2")
 }
 
 # Resource to import the image
-resource "oci_core_image" "imported_image" {
+resource "oci_core_image" "imported_nixos_aarch64_image" {
   compartment_id = var.compartment_ocid
   display_name   = "Headscale NixOS Image"
 
@@ -56,74 +49,23 @@ resource "oci_core_image" "imported_image" {
     source_type    = "objectStorageTuple"
     namespace_name = var.namespace
     bucket_name    = data.oci_objectstorage_bucket.image_bucket.name
-    object_name    = oci_objectstorage_object.nixos_image.object
+    object_name    = oci_objectstorage_object.nixos_aarch64.object
   }
 
   # Optional: Launch mode for the image
   launch_mode = "PARAVIRTUALIZED"
 
   # Add a dependency on the object resource
-  depends_on = [oci_objectstorage_object.nixos_image]
+  depends_on = [oci_objectstorage_object.nixos_aarch64]
 }
 
-# # Resource to import the image
-# resource "oci_core_image" "imported_image" {
-#   compartment_id = "ocid1.compartment.oc1..aaaaaaaaegdsylob7sbivyixrfjbqj76awi5bd2gvgptdtgcumg23rl7w2jq"
-#   display_name   = "Headscale NixOS Image"
+resource "oci_core_shape_management" "nixos_aarch64_a1_shape" {
+    compartment_id = var.compartment_ocid
+    image_id = oci_core_image.imported_nixos_aarch64_image.id
+    shape_name = "VM.Standard.A1.Flex"
 
-#   image_source_details {
-#     source_type    = "objectStorageTuple"
-#     namespace_name = "idlzjn2xkhld"
-#     bucket_name    = "nixos-image-bucket"
-#     object_name    = "nixos-image.qcow2"
-#   }
-
-#   # Optional: Launch mode for the image
-#   launch_mode = "NATIVE"
-# }
-
-# Output the OCID of the imported image
-output "imported_image_ocid" {
-  value = oci_core_image.imported_image.id
+    depends_on = [oci_core_image.imported_nixos_aarch64_image]
 }
-
-
-# Select instance shape based on workspace
-# locals {
-#   ssh_username            = "opc"
-#   instance_shape          = "VM.Standard.A1.Flex"
-#   cpu_cores_count         = "4"
-#   memory_in_gbs           = "22"
-#   boot_volume_vpus_per_gb = "120"
-#   os_image_ocid           = oci_core_image.imported_image.id
-#   server_type             = "arm"
-#   instance_public_ip      = oci_core_instance.instance.public_ip
-#   instance_ids            = oci_core_instance.instance[*].id
-#   availability_domain     = "xHzH:US-ASHBURN-AD-3"
-# }
-# locals {
-#   ssh_username            = "opc"
-#   instance_shape          = "VM.Standard.E4.Flex"
-#   cpu_cores_count         = "2"
-#   memory_in_gbs           = "4"
-#   boot_volume_vpus_per_gb = "50"
-#   os_image_ocid           = oci_core_image.imported_image.id
-#   instance_public_ip      = oci_core_instance.instance.public_ip
-#   instance_ids            = oci_core_instance.instance[*].id
-#   availability_domain     = "xHzH:US-ASHBURN-AD-3"
-# }
-locals {
-  ssh_username            = "opc"
-  instance_shape          = "VM.Standard.E2.1.Micro"
-  cpu_cores_count         = "1"
-  memory_in_gbs           = "1"
-  boot_volume_vpus_per_gb = "10"
-  os_image_ocid           = oci_core_image.imported_image.id
-  instance_public_ip      = oci_core_instance.instance.public_ip
-  instance_ids            = oci_core_instance.instance[*].id
-  availability_domain     = "xHzH:US-ASHBURN-AD-3"
-}
-
 
 data "oci_identity_availability_domains" "ads" {
     compartment_id = var.tenancy_ocid
@@ -134,6 +76,23 @@ resource "oci_core_vcn" "terraform_vcn" {
   compartment_id = var.compartment_ocid
   display_name   = "Terraform VCN"
   dns_label      = "tfvcn"
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+resource "oci_core_subnet" "terraform_subnet" {
+  cidr_block        = "10.0.1.0/24"
+  compartment_id    = var.compartment_ocid
+  vcn_id            = oci_core_vcn.terraform_vcn.id
+  display_name      = "Terraform Subnet"
+  security_list_ids = [oci_core_security_list.allow_ssh_http_https.id]
+  route_table_id    = oci_core_route_table.public_route_table.id
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "oci_core_internet_gateway" "internet_gateway" {
@@ -192,16 +151,20 @@ resource "oci_core_security_list" "allow_ssh_http_https" {
   }
 }
 
-resource "oci_core_subnet" "terraform_subnet" {
-  cidr_block        = "10.0.1.0/24"
-  compartment_id    = var.compartment_ocid
-  vcn_id            = oci_core_vcn.terraform_vcn.id
-  display_name      = "Terraform Subnet"
-  security_list_ids = [oci_core_security_list.allow_ssh_http_https.id]
-  route_table_id    = oci_core_route_table.public_route_table.id
+locals {
+  ssh_username            = "opc"
+  instance_shape          = "VM.Standard.A1.Flex"
+  cpu_cores_count         = "4"
+  memory_in_gbs           = "24"
+  boot_volume_vpus_per_gb = "200"
+  os_image_ocid           = oci_core_image.imported_nixos_aarch64_image.id
+  server_type             = "arm"
+  instance_public_ip      = oci_core_instance.nixos_aarch64_a1_instance.public_ip
+  instance_ids            = oci_core_instance.nixos_aarch64_a1_instance[*].id
+  availability_domain     = "xHzH:US-ASHBURN-AD-3"
 }
 
-resource "oci_core_instance" "instance" {
+resource "oci_core_instance" "nixos_aarch64_a1_instance" {
   availability_domain = local.availability_domain
   compartment_id      = var.compartment_ocid
   display_name        = "${var.instance_name}-${terraform.workspace}"
@@ -223,25 +186,11 @@ resource "oci_core_instance" "instance" {
     assign_public_ip = true
   }
 
-  metadata = {
-    ssh_authorized_keys = file(var.ssh_public_key)
-  }
-
   launch_options {
     network_type                 = "PARAVIRTUALIZED"
     boot_volume_type             = "PARAVIRTUALIZED"
     is_pv_encryption_in_transit_enabled = false
-    firmware                     = "UEFI_64"
   }
 
-  lifecycle {
-    replace_triggered_by = [
-      oci_core_image.imported_image.id,
-      oci_objectstorage_object.nixos_image.metadata["md5_hex"]
-    ]
-  }
-}
-
-output "instance_public_ip" {
-  value = local.instance_public_ip
+  depends_on = [oci_core_shape_management.nixos_aarch64_a1_shape]
 }
