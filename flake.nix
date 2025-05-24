@@ -22,7 +22,7 @@
   };
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     sops-nix.url = "github:Mic92/sops-nix";
     authentik-nix.url = "github:marcelcoding/authentik-nix";
@@ -39,7 +39,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     ycotd-python-queue = {
-      url = "path:./ycotd-python-queue";
+      url = "git+ssh://git@github.com/StealthBadger747/ycotd-python-queue";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nixarr = {
@@ -118,6 +118,17 @@
           if system == "x86_64-linux"
           then config.config.system.build.VMA
           else nixpkgs.legacyPackages.${system}.runCommand "pc24-proxmox-image" {} ''
+            echo "This package can only be built on x86_64-linux systems"
+            exit 1
+          '';
+
+        zagato-proxmox-image = 
+          let 
+            config = self.nixosConfigurations.zagato-proxmox;
+          in
+          if system == "x86_64-linux"
+          then config.config.system.build.VMA
+          else nixpkgs.legacyPackages.${system}.runCommand "zagato-proxmox-image" {} ''
             echo "This package can only be built on x86_64-linux systems"
             exit 1
           '';
@@ -242,6 +253,17 @@
             ./modules/configs/common.nix
             ./modules/hosts/gibraltar/bugatti-nix/main.nix
             ./modules/hosts/gibraltar/bugatti-nix/tailscale.nix
+            sops-nix.nixosModules.sops
+          ];
+          specialArgs = { pkgs-unstable = mkPkgsUnstable "x86_64-linux"; };
+        };
+
+        # Base Zagato Proxmox Image
+        zagato-proxmox = nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          modules = [
+            "${nixpkgs}/nixos/modules/virtualisation/proxmox-image.nix"
+            ./modules/hosts/ucaia/zagato/default.nix
             sops-nix.nixosModules.sops
           ];
           specialArgs = { pkgs-unstable = mkPkgsUnstable "x86_64-linux"; };
