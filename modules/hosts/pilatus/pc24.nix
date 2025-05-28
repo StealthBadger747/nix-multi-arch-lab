@@ -9,6 +9,7 @@ in {
 
   imports = [
     ./pc24/zfs.nix
+    ./pc24/nfs.nix
     ../../overlays/nixarr/qbittorrent.nix
   ];
 
@@ -144,7 +145,7 @@ in {
     prowlarr = {
       enable = true;
       package = pkgs-unstable.prowlarr;
-      stateDir = "/APPS/arr-apps/prowlarr";
+      # stateDir = "/APPS/arr-apps/prowlarr";
       openFirewall = true;
     };
     qbittorrent = {

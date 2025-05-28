@@ -199,7 +199,6 @@
             ./modules/hosts/pilatus/nvidia-headless.nix
             sops-nix.nixosModules.sops
             nixarr.nixosModules.default
-            "${nixpkgs-unstable}/nixos/modules/services/misc/recyclarr.nix"
           ];
           specialArgs = {
             pkgs-unstable = mkPkgsUnstable "x86_64-linux";

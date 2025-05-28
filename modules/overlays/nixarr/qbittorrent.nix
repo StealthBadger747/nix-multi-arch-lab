@@ -138,8 +138,8 @@ in {
         
         NoNewPrivileges = true;
         PrivateTmp = true;
-        ProtectSystem = "strict";
-        ProtectHome = true;
+        ProtectSystem = "off";
+        ProtectHome = false;
         ReadWritePaths = [ cfg.stateDir ];
         
         IOSchedulingPriority = 7;
