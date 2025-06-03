@@ -1,4 +1,4 @@
-{ config, pkgs, pkgs-unstable, lib, nixarr, ... }:
+{ config, pkgs, pkgs-unstable, pkgs-overseerr, lib, nixarr, ... }:
 let
   host = "pilatus";
   tld = "parawell.cloud";
@@ -11,10 +11,13 @@ in {
     ./pc24/zfs.nix
     ./pc24/nfs.nix
     ../../overlays/nixarr/qbittorrent.nix
+    ../../overlays/nixarr/overseerr.nix
   ];
 
   environment.systemPackages = with pkgs; [
     attic-client
+    pipx
+    claude-code
   ];
 
   sops = {
@@ -112,6 +115,7 @@ in {
       package = pkgs-unstable.flaresolverr;
       openFirewall = true;
     };
+
   };
 
   nixarr = {
@@ -156,6 +160,13 @@ in {
       vpn.enable = true;
       webUIPort = 10095;
       btPort = 12931;
+    };
+    
+    overseerr = {
+      enable = true;
+      package = pkgs-overseerr.overseerr;
+      stateDir = "/APPS/arr-apps/overseerr";
+      openFirewall = true;
     };
   };
 
