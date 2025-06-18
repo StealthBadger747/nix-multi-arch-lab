@@ -10,7 +10,7 @@ in {
   imports = [
     ./pc24/zfs.nix
     ./pc24/nfs.nix
-    ../../overlays/nixarr/qbittorrent.nix
+    # ../../overlays/nixarr/qbittorrent.nix
     ../../overlays/nixarr/overseerr.nix
   ];
 
@@ -158,8 +158,8 @@ in {
       stateDir = "/APPS/arr-apps/qbittorrent";
       openFirewall = true;
       vpn.enable = true;
-      webUIPort = 10095;
-      btPort = 12931;
+      uiPort = 10095;
+      peerPort = 12931;
     };
     
     overseerr = {

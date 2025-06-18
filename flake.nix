@@ -44,7 +44,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nixarr = {
-      url = "github:rasmus-kirk/nixarr";
+      url = "github:StealthBadger747/nixarr/add-qbittorrent";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
   };
