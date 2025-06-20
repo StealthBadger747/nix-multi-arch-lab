@@ -15,7 +15,7 @@
     qemuConf = {
       cores = 4;
       memory = 8192;
-      boot = "virtio0";
+      # boot = "order=virtio0,scsi0;net0";
       virtio0 = "local-zfs:vm-9999-disk-0";
     };
   };

@@ -22,7 +22,21 @@
     nameservers = ["10.0.4.12" "10.0.4.13" "1.1.1.1"];
     firewall = {
       enable = true;
-      allowedTCPPorts = [22 80 443];
+      allowedTCPPorts = [
+        22      # SSH
+        80      # HTTP
+        443     # HTTPS
+        6443    # Kubernetes API server
+        2379    # etcd client API
+        2380    # etcd peer API
+        10250   # Kubelet API
+        # Longhorn ports
+        9500    # Longhorn Manager
+        8000    # Longhorn Engine
+      ];
+      allowedUDPPorts = [
+        8472    # Flannel VXLAN
+      ];
     };
   };
 }

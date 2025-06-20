@@ -8,7 +8,7 @@
   ...
 }:
 let
-  hostName = "zagatto-master-02";
+  hostName = "zagato-master-02";
 in {
   imports = [
     ../default.nix
@@ -26,7 +26,7 @@ in {
   networking = {
     hostName = hostName;
     interfaces = {
-      enp6s18 = {
+      ens18 = {
         ipv4 = {
           addresses = [{
             address = "10.0.4.202";
@@ -38,11 +38,26 @@ in {
     defaultGateway = "10.0.4.1";
   };
 
+  # SOPS configuration
+  sops = {
+    defaultSopsFile = ../../../../../secrets/hosts/ucaia/zagato/k3s-secrets.yaml;
+    defaultSopsFormat = "yaml";
+    age.sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
+    age.keyFile = "/var/lib/sops-nix/key.txt";
+    age.generateKey = true;
+    secrets = {
+      k3s-cluster-token = {
+        mode = "0400";
+        restartUnits = [ "k3s.service" ];
+      };
+    };
+  };
+
   # K3s configuration for the second server node
   services.k3s = {
     enable = true;
     role = "server";
-    token = "k3s-ucaia-cluster-token"; # Must match token from kube-master-1
+    tokenFile = config.sops.secrets.k3s-cluster-token.path;
     serverAddr = "https://10.0.4.201:6443"; # Address of the first server
   };
 
