@@ -23,20 +23,8 @@ in {
     };
   };
 
-  networking = {
-    hostName = hostName;
-    interfaces = {
-      ens18 = {
-        ipv4 = {
-          addresses = [{
-            address = "10.0.4.202";
-            prefixLength = 24;
-          }];
-        };
-      };
-    };
-    defaultGateway = "10.0.4.1";
-  };
+  # Enable cloud-init network configuration
+  services.cloud-init.network.enable = true;
 
   # SOPS configuration
   sops = {
