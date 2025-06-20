@@ -27,6 +27,7 @@ jobs:
         with:
           extra-conf: |
             experimental-features = nix-command flakes
+            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
       
       - name: Setup Flakehub Cache
         uses: DeterminateSystems/flakehub-cache-action@main
@@ -55,6 +56,7 @@ jobs:
       - name: Build and Deploy Authentik Nix
         env:
           SOPS_AGE_KEY: ${{ env.SOPS_AGE_KEY }}
+          NIX_CONFIG: "access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}"
         run: |
           # Test connection to the builder
           ssh erikp@150.136.213.118 echo "SSH connection successful"
