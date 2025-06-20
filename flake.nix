@@ -474,6 +474,16 @@
               self.nixosConfigurations.k3s-master-3;
             magicRollback = true;
           };
+
+        zagato-worker-01 = {
+          hostname = "10.0.4.204";
+          sshUser = "erikp";
+          profiles.system = {
+            user = "root";
+            path = deploy-rs.lib."x86_64-linux".activate.nixos
+              self.nixosConfigurations.k3s-master-3;
+            magicRollback = true;
+          };
         };
       };
 

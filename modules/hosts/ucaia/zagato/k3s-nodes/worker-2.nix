@@ -23,20 +23,8 @@ in {
     };
   };
 
-  networking = {
-    hostName = hostName;
-    interfaces = {
-      ens18 = {
-        ipv4 = {
-          addresses = [{
-            address = "10.0.4.212";
-            prefixLength = 24;
-          }];
-        };
-      };
-    };
-    defaultGateway = "10.0.4.1";
-  };
+  # Enable cloud-init network configuration
+  services.cloud-init.network.enable = true;
 
   # K3s configuration for a worker node
   services.k3s = {

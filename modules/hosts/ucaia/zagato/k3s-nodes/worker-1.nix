@@ -23,26 +23,48 @@ in {
     };
   };
 
-  networking = {
-    hostName = hostName;
-    interfaces = {
-      ens18 = {
-        ipv4 = {
-          addresses = [{
-            address = "10.0.4.211";
-            prefixLength = 24;
-          }];
-        };
+  # Enable cloud-init network configuration
+  services.cloud-init.network.enable = true;
+
+  # SOPS configuration
+  sops = {
+    defaultSopsFile = ../../../../../secrets/hosts/ucaia/zagato/k3s-secrets.yaml;
+    defaultSopsFormat = "yaml";
+    age.keyFile = "/run/age/age.key";
+    age.generateKey = false;
+    secrets = {
+      k3s-cluster-token = {
+        mode = "0400";
+        restartUnits = [ "k3s.service" ];
       };
     };
-    defaultGateway = "10.0.4.1";
   };
+
+  # inject *only* your Age-key logic; everything else (hostname, SSH keys,
+  # filesystem resize, modules, etc.) is handled by the module’s defaults
+  services.cloud-init.settings = lib.mkMerge [
+    # You can override or extend any of the structured settings here.
+    {
+      bootcmd = [
+        # 1) create the dir on the tmpfs
+        "mkdir -p /run/age"
+
+        # 2) pull 'age_key' out of your meta-data snippet
+        "sh -c 'cloud-init query -f \"{{ ds.meta_data.age_key }}\" > /run/age/age.key'"
+      ];
+
+      runcmd = [
+        # 3) lock it down
+        "chmod 0400 /run/age/age.key"
+      ];
+    }
+  ];
 
   # K3s configuration for a worker node
   services.k3s = {
     enable = true;
     role = "agent";
-    token = "k3s-ucaia-cluster-token"; # Must match token from master nodes
+    token = config.sops.secrets.k3s-cluster-token.path;
     serverAddr = "https://10.0.4.201:6443"; # Address of the first server
   };
 
