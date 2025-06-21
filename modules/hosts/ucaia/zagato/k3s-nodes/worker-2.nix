@@ -19,7 +19,7 @@ in {
     filenameSuffix = hostName;
     qemuConf = {
       name = hostName;
-      net0 = "virtio=E5:F8:1A:3D:65:B7,bridge=vmbr0,firewall=1";
+      net0 = "virtio=D2:53:71:45:AB:7B,bridge=vmbr0,firewall=1";
     };
   };
 

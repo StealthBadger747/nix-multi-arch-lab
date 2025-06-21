@@ -486,6 +486,17 @@
             magicRollback = false;
           };
         };
+
+        zagato-worker-02 = {
+          hostname = "10.0.4.205";
+          sshUser = "erikp";
+          profiles.system = {
+            user = "root";
+            path = deploy-rs.lib."x86_64-linux".activate.nixos
+              self.nixosConfigurations.k3s-worker-2;
+            magicRollback = false;
+          };
+        };
       };
 
       # Deployment checks
