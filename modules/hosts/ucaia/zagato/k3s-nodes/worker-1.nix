@@ -40,6 +40,17 @@ in {
     };
   };
 
+  systemd.services.cloud-init = {
+    unitConfig = {
+      # Don't let cloud-init failure affect other services
+      StartLimitBurst = 0;
+    };
+    serviceConfig = {
+      # Make the service succeed even if cloud-init exits with code 1
+      SuccessExitStatus = [ 0 1 ];
+    };
+  };
+
   # inject *only* your Age-key logic; everything else (hostname, SSH keys,
   # filesystem resize, modules, etc.) is handled by the module’s defaults
   services.cloud-init.settings = lib.mkMerge [
@@ -64,7 +75,7 @@ in {
   services.k3s = {
     enable = true;
     role = "agent";
-    token = config.sops.secrets.k3s-cluster-token.path;
+    tokenFile = config.sops.secrets.k3s-cluster-token.path;
     serverAddr = "https://10.0.4.201:6443"; # Address of the first server
   };
 
