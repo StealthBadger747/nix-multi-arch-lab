@@ -143,6 +143,17 @@
             echo "This package can only be built on x86_64-linux systems"
             exit 1
           '';
+
+        giulia-proxmox-image = 
+          let 
+            config = self.nixosConfigurations.giulia-proxmox;
+          in
+          if system == "x86_64-linux"
+          then config.config.system.build.VMA
+          else nixpkgs.legacyPackages.${system}.runCommand "giulia-proxmox-image" {} ''
+            echo "This package can only be built on x86_64-linux systems"
+            exit 1
+          '';
           
         # K3s cluster node images
         k3s-master-1-image = 
@@ -336,6 +347,16 @@
           specialArgs = { pkgs-unstable = mkPkgsUnstable "x86_64-linux"; };
         };
 
+        giulia-proxmox = nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          modules = [
+            "${nixpkgs}/nixos/modules/virtualisation/proxmox-image.nix"
+            ./modules/hosts/ucaia/giulia/default.nix
+            sops-nix.nixosModules.sops
+          ];
+          specialArgs = { pkgs-unstable = mkPkgsUnstable "x86_64-linux"; };
+        };
+
         # K3s Cluster Node 1 (Master)
         k3s-master-1 = nixpkgs.lib.nixosSystem {
           system = "x86_64-linux";
@@ -440,6 +461,17 @@
               self.nixosConfigurations.bugatti-proxmox-nix;
             magicRollback = true;
             # remoteBuild = true;
+          };
+        };
+
+        giulia = {
+          hostname = "10.0.4.33";
+          sshUser = "erikp";
+          profiles.system = {
+            user = "root";
+            path = deploy-rs.lib."x86_64-linux".activate.nixos
+              self.nixosConfigurations.giulia-proxmox;
+            magicRollback = true;
           };
         };
 
