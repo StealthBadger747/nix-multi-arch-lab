@@ -77,7 +77,7 @@
   users.users.connorgolden = {
     isNormalUser = true;
     group = "users";
-    extraGroups = [ "wheel" ];
+    extraGroups = [ "wheel" "docker" ];
     description = "Connor Golden";
     hashedPassword =
       "$6$e75Jf/dlhJJ.dF49$9vAbUWwYqrGqtT4I/T6ycHvEM6Z23n9Z3jKunoXwdBVS5rXhWW6VEGRohQCvltPS9lP8t0PL6bLMzWGIEAW.n/";
@@ -89,7 +89,7 @@
   users.users.erikp = {
     isNormalUser = true;
     group = "users";
-    extraGroups = [ "wheel" ];
+    extraGroups = [ "wheel" "docker" ];
     description = "Erik Parawell";
     hashedPassword =
       "$6$518O2ct8O/.dFXC3$oGwdfF4bgrojKTwE7guwAgtwUaoJAHDJ0IQbrNlahFz75cyaD4ZZ8UHtLFDvrK2v74gu/rErHZJ6W9lMSxQVW.";

@@ -28,12 +28,17 @@ in {
   };
 
   environment.systemPackages = (with pkgs; [
-    # stuff here
-  ]) ++ 
-  ( with pkgs-unstable; [
-    # stuff here
-  ]
+      # stuff here
+    ]) ++ 
+    ( with pkgs-unstable; [
+      # stuff here
+    ]
   );
 
+  fileSystems."/media-server" = {
+    device = "/dev/disk/by-uuid/f7265bb9-aa58-45f8-8a93-fdfa7d3d3727";
+    autoResize = true;
+    fsType = "ext4";
+  };
 
 }
