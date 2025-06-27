@@ -155,6 +155,7 @@
           age
           sops
           nano
+          nh
         ]) ++ ( with pkgs-unstable; [
           oci-cli
           opentofu

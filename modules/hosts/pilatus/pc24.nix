@@ -20,6 +20,8 @@ in {
     ]) ++ 
     ( with pkgs-unstable; [
       claude-code
+      direnv
+      nh
     ]
   );
 
