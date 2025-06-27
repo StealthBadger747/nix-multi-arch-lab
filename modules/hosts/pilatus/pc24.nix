@@ -14,11 +14,14 @@ in {
     ../../overlays/nixarr/overseerr.nix
   ];
 
-  environment.systemPackages = with pkgs; [
-    attic-client
-    pipx
-    claude-code
-  ];
+  environment.systemPackages = (with pkgs; [
+      attic-client
+      pipx
+    ]) ++ 
+    ( with pkgs-unstable; [
+      claude-code
+    ]
+  );
 
   sops = {
     defaultSopsFile = ../../../secrets/secrets.yaml;
