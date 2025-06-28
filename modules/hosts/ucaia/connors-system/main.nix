@@ -57,7 +57,7 @@
   };
 
   # Disable unnecessary services and features
-  hardware.pulseaudio.enable = false;
+  services.pulseaudio.enable = false;
   services.pipewire.enable = false;
   hardware.bluetooth.enable = false;
   services.xserver.enable = false;

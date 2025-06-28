@@ -143,6 +143,73 @@
             echo "This package can only be built on x86_64-linux systems"
             exit 1
           '';
+
+        giulia-proxmox-image = 
+          let 
+            config = self.nixosConfigurations.giulia-proxmox;
+          in
+          if system == "x86_64-linux"
+          then config.config.system.build.VMA
+          else nixpkgs.legacyPackages.${system}.runCommand "giulia-proxmox-image" {} ''
+            echo "This package can only be built on x86_64-linux systems"
+            exit 1
+          '';
+          
+        # K3s cluster node images
+        k3s-master-1-image = 
+          let 
+            config = self.nixosConfigurations.k3s-master-1;
+          in
+          if system == "x86_64-linux"
+          then config.config.system.build.VMA
+          else nixpkgs.legacyPackages.${system}.runCommand "k3s-master-1-image" {} ''
+            echo "This package can only be built on x86_64-linux systems"
+            exit 1
+          '';
+          
+        k3s-master-2-image = 
+          let 
+            config = self.nixosConfigurations.k3s-master-2;
+          in
+          if system == "x86_64-linux"
+          then config.config.system.build.VMA
+          else nixpkgs.legacyPackages.${system}.runCommand "k3s-master-2-image" {} ''
+            echo "This package can only be built on x86_64-linux systems"
+            exit 1
+          '';
+          
+        k3s-master-3-image = 
+          let 
+            config = self.nixosConfigurations.k3s-master-3;
+          in
+          if system == "x86_64-linux"
+          then config.config.system.build.VMA
+          else nixpkgs.legacyPackages.${system}.runCommand "k3s-master-3-image" {} ''
+            echo "This package can only be built on x86_64-linux systems"
+            exit 1
+          '';
+          
+        k3s-worker-1-image = 
+          let 
+            config = self.nixosConfigurations.k3s-worker-1;
+          in
+          if system == "x86_64-linux"
+          then config.config.system.build.VMA
+          else nixpkgs.legacyPackages.${system}.runCommand "k3s-worker-1-image" {} ''
+            echo "This package can only be built on x86_64-linux systems"
+            exit 1
+          '';
+          
+        k3s-worker-2-image = 
+          let 
+            config = self.nixosConfigurations.k3s-worker-2;
+          in
+          if system == "x86_64-linux"
+          then config.config.system.build.VMA
+          else nixpkgs.legacyPackages.${system}.runCommand "k3s-worker-2-image" {} ''
+            echo "This package can only be built on x86_64-linux systems"
+            exit 1
+          '';
       };
 
       # Dev shell is now per-system
@@ -280,6 +347,71 @@
           ];
           specialArgs = { pkgs-unstable = mkPkgsUnstable "x86_64-linux"; };
         };
+
+        giulia-proxmox = nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          modules = [
+            "${nixpkgs}/nixos/modules/virtualisation/proxmox-image.nix"
+            ./modules/hosts/ucaia/giulia/default.nix
+            sops-nix.nixosModules.sops
+          ];
+          specialArgs = { pkgs-unstable = mkPkgsUnstable "x86_64-linux"; };
+        };
+
+        # K3s Cluster Node 1 (Master)
+        k3s-master-1 = nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          modules = [
+            "${nixpkgs}/nixos/modules/virtualisation/proxmox-image.nix"
+            ./modules/hosts/ucaia/zagato/k3s-nodes/master-1.nix
+            sops-nix.nixosModules.sops
+          ];
+          specialArgs = { pkgs-unstable = mkPkgsUnstable "x86_64-linux"; };
+        };
+
+        # K3s Cluster Node 2 (Master)
+        k3s-master-2 = nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          modules = [
+            "${nixpkgs}/nixos/modules/virtualisation/proxmox-image.nix"
+            ./modules/hosts/ucaia/zagato/k3s-nodes/master-2.nix
+            sops-nix.nixosModules.sops
+          ];
+          specialArgs = { pkgs-unstable = mkPkgsUnstable "x86_64-linux"; };
+        };
+
+        # K3s Cluster Node 3 (Master)
+        k3s-master-3 = nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          modules = [
+            "${nixpkgs}/nixos/modules/virtualisation/proxmox-image.nix"
+            ./modules/hosts/ucaia/zagato/k3s-nodes/master-3.nix
+            sops-nix.nixosModules.sops
+          ];
+          specialArgs = { pkgs-unstable = mkPkgsUnstable "x86_64-linux"; };
+        };
+
+        # K3s Cluster Node 4 (Worker)
+        k3s-worker-1 = nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          modules = [
+            "${nixpkgs}/nixos/modules/virtualisation/proxmox-image.nix"
+            ./modules/hosts/ucaia/zagato/k3s-nodes/worker-1.nix
+            sops-nix.nixosModules.sops
+          ];
+          specialArgs = { pkgs-unstable = mkPkgsUnstable "x86_64-linux"; };
+        };
+
+        # K3s Cluster Node 5 (Worker)
+        k3s-worker-2 = nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          modules = [
+            "${nixpkgs}/nixos/modules/virtualisation/proxmox-image.nix"
+            ./modules/hosts/ucaia/zagato/k3s-nodes/worker-2.nix
+            sops-nix.nixosModules.sops
+          ];
+          specialArgs = { pkgs-unstable = mkPkgsUnstable "x86_64-linux"; };
+        };
       };
 
       # Deploy-rs configuration
@@ -330,6 +462,72 @@
               self.nixosConfigurations.bugatti-proxmox-nix;
             magicRollback = true;
             # remoteBuild = true;
+          };
+        };
+
+        giulia = {
+          hostname = "10.0.4.33";
+          sshUser = "erikp";
+          profiles.system = {
+            user = "root";
+            path = deploy-rs.lib."x86_64-linux".activate.nixos
+              self.nixosConfigurations.giulia-proxmox;
+            magicRollback = true;
+          };
+        };
+
+        zagato-master-01 = {
+          hostname = "10.0.4.201";
+          sshUser = "erikp";
+          profiles.system = {
+            user = "root";
+            path = deploy-rs.lib."x86_64-linux".activate.nixos
+              self.nixosConfigurations.k3s-master-1;
+            magicRollback = true;
+          };
+        };
+
+        zagato-master-02 = {
+          hostname = "10.0.4.202";
+          sshUser = "erikp";
+          profiles.system = {
+            user = "root";
+            path = deploy-rs.lib."x86_64-linux".activate.nixos
+              self.nixosConfigurations.k3s-master-2;
+            magicRollback = true;
+          };
+        };
+
+        zagato-master-03 = {
+          hostname = "10.0.4.203";
+          sshUser = "erikp";
+          profiles.system = {
+            user = "root";
+            path = deploy-rs.lib."x86_64-linux".activate.nixos
+              self.nixosConfigurations.k3s-master-3;
+            magicRollback = true;
+          };
+        };
+
+        zagato-worker-01 = {
+          hostname = "10.0.4.204";
+          sshUser = "erikp";
+          profiles.system = {
+            user = "root";
+            path = deploy-rs.lib."x86_64-linux".activate.nixos
+              self.nixosConfigurations.k3s-worker-1;
+            magicRollback = false;
+          };
+        };
+
+        zagato-worker-02 = {
+          hostname = "10.0.4.205";
+          sshUser = "erikp";
+          profiles.system = {
+            user = "root";
+            path = deploy-rs.lib."x86_64-linux".activate.nixos
+              self.nixosConfigurations.k3s-worker-2;
+            magicRollback = false;
           };
         };
       };

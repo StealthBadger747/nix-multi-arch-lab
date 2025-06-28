@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+# SOPS wrapper that loads age key from 1Password
+# Usage: ./scripts/sops-op [sops arguments...]
+
+set -euo pipefail
+
+# 1Password path to the age key
+AGE_KEY_PATH="op://Github_Actions/nix_age_secret/private_key"
+
+# Export the age key from 1Password
+export SOPS_AGE_KEY=$(op read "$AGE_KEY_PATH")
+
+# Run sops with all passed arguments
+exec sops "$@"
