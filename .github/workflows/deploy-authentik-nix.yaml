@@ -3,7 +3,7 @@ name: Build & Deploy
 on:
   pull_request:
   push:
-    branches: []
+    branches: [master]
 
 jobs:
   build-amd64:
@@ -27,6 +27,7 @@ jobs:
         with:
           extra-conf: |
             experimental-features = nix-command flakes
+            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
       
       - name: Setup Flakehub Cache
         uses: DeterminateSystems/flakehub-cache-action@main
@@ -43,18 +44,34 @@ jobs:
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
+          echo "${{ env.GITHUB_SSH_KEY }}" > ~/.ssh/id_ed25519_github
           chmod 600 ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519_github
           cat << 'EOF' >> ~/.ssh/known_hosts
+          github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl
+          github.com ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCj7ndNxQowgcQnjshcLrqPEiiphnt+VTTvDP6mHBL9j1aNUkY4Ue1gvwnGLVlOhGeYrnZaMgRK6+PKCUXaDbC7qtbW8gIkhL7aGCsOr/C56SJMy/BCZfxd1nWzAOxSDPgVsmerOBYfNqltV9/hWCqBywINIR+5dIg6JTJ72pcEpEjcYgXkE2YEFXV1JHnsKgbLWNlhScqb2UmyRkQyytRLtL+38TGxkxCflmO+5Z8CSSNY7GidjMIZ7Q4zMjA2n1nGrlTDkzwDCsw+wqFPGQA179cnfGWOWRVruj16z6XyvxvjJwbz0wQZ75XK5tKSb7FNyeIEs4TT4jk+S4dhPeAUC5y+bDYirYgM4GC7uEnztnZyaVWQ7B381AK4Qdrwt51ZqExKbQpTUNn+EjqoTwvqNj4kqx5QUCI0ThS/YkOxJCXmPUWZbhjpCg56i+2aB6CmK2JGhn57K5mj0MNdBXA4/WnwH6XoPWJzK5Nyu2zB3nAZp+S5hpQs+p1vN1/wsjk=
           150.136.213.118 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPR9yQC1u8J1GIo8SToHGgDAkgnxhTYXoX6LOnqYUdfM
           100.64.0.28 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPDm5ArgQ8Ehj/PibOa1G9NlA3Wp87fXM8oOvLxwVUHu
           129.153.154.190 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKaH2Sp/sVQ9bhwLiaWg9P93grswjsfcNZfujwfQ/iri
           100.64.0.46 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPuv8Q8cVLxIGMIIkNBGPC/dh4fTLHcWkVCaWhOtn1Ls
           EOF
+          
+          # Configure SSH to use the GitHub key for GitHub repositories
+          cat << 'EOF' >> ~/.ssh/config
+          Host github.com
+              HostName github.com
+              User git
+              IdentityFile ~/.ssh/id_ed25519_github
+              IdentitiesOnly yes
+          EOF
+          
           chmod 644 ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/config
 
       - name: Build and Deploy Authentik Nix
         env:
           SOPS_AGE_KEY: ${{ env.SOPS_AGE_KEY }}
+          NIX_CONFIG: "access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}"
         run: |
           # Test connection to the builder
           ssh erikp@150.136.213.118 echo "SSH connection successful"
