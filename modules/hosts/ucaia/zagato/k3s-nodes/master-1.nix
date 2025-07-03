@@ -49,6 +49,11 @@ in {
     clusterInit = true;
   };
 
+  # TFTP Server configuration
+  services.tftpd = {
+    enable = true;
+    path = "/srv/tftp";
+  };
 
   # Open ports needed for K3s
   networking.firewall = {

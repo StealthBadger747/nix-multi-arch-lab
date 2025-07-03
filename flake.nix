@@ -198,6 +198,28 @@
             echo "This package can only be built on x86_64-linux systems"
             exit 1
           '';
+
+        k3s-worker-N-image = 
+          let 
+            config = self.nixosConfigurations.k3s-worker-N;
+          in
+          if system == "x86_64-linux"
+          then config.config.system.build.isoImage
+          else nixpkgs.legacyPackages.${system}.runCommand "k3s-worker-N-image" {} ''
+            echo "This package can only be built on x86_64-linux systems"
+            exit 1
+          '';
+
+        k3s-worker-N-netboot-image = 
+          let 
+            config = self.nixosConfigurations.k3s-worker-N;
+          in
+          if system == "x86_64-linux"
+          then config.config.system.build.netbootIpxeScript
+          else nixpkgs.legacyPackages.${system}.runCommand "k3s-worker-N-image" {} ''
+            echo "This package can only be built on x86_64-linux systems"
+            exit 1
+          '';
       };
 
       # Dev shell is now per-system
@@ -395,6 +417,18 @@
           modules = [
             "${nixpkgs}/nixos/modules/virtualisation/proxmox-image.nix"
             ./modules/hosts/ucaia/zagato/k3s-nodes/worker-2.nix
+            sops-nix.nixosModules.sops
+          ];
+          specialArgs = { pkgs-unstable = mkPkgsUnstable "x86_64-linux"; };
+        };
+
+        # K3s Cluster Node N (Worker)
+        k3s-worker-N = nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          modules = [
+            # "${nixpkgs}/nixos/modules/virtualisation/proxmox-image.nix"
+            "${nixpkgs}/nixos/modules/installer/netboot/netboot-minimal.nix"
+            ./modules/hosts/ucaia/zagato/k3s-nodes/worker-N.nix
             sops-nix.nixosModules.sops
           ];
           specialArgs = { pkgs-unstable = mkPkgsUnstable "x86_64-linux"; };
