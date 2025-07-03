@@ -164,8 +164,20 @@ in {
         };
         headscale = {
           url = "https://${headscale_fqdn}";
-          config_path = "${headscaleConfig}";
-          config_strict = false;
+          # config_path = "${headscaleConfig}";
+          # config_strict = false;
+          config_path = "${(pkgs.formats.yaml {}).generate "headscale.yml" (
+            lib.recursiveUpdate
+            config.services.headscale.settings
+            {
+              acme_email = "/dev/null";
+              tls_cert_path = "/dev/null";
+              tls_key_path = "/dev/null";
+              policy.path = "/dev/null";
+              oidc.client_secret_path = "/dev/null";
+            }
+          )}";
+          config_strict = true;
         };
         integration.proc.enabled = true;
         oidc = {
@@ -176,6 +188,7 @@ in {
           token_endpoint_auth_method = "client_secret_basic";
           headscale_api_key_path = config.sops.secrets.headplane_headscale_api_key.path;
           redirect_uri = "https://${headscale_fqdn}/admin/oidc/callback";
+          user_storage_file = "/var/lib/headplane/users.json";
         };
       };
     };

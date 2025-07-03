@@ -36,7 +36,8 @@
     };
     flake-utils.url = "github:numtide/flake-utils";
     headplane = {
-      url = "github:StealthBadger747/headplane/erikp/implement-path-loader";
+      # url = "github:StealthBadger747/headplane/erikp/implement-path-loader";
+      url = "github:igor-ramazanov/headplane/update-nix-changes-branch";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     ycotd-python-queue = {
@@ -224,10 +225,10 @@
           nano
           nh
         ]) ++ ( with pkgs-unstable; [
-          oci-cli
-          opentofu
+          # oci-cli
+          # opentofu
           deploy-rs.packages.${system}.default
-          vulnix.packages.${system}.default
+          # vulnix.packages.${system}.default
         ]);
 
         shellHook = ''

@@ -253,16 +253,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1747685575,
-        "narHash": "sha256-+OzE8WBGCVbzRI1+lLoElpZvGobJeCz0bGNUTSFFlbE=",
-        "owner": "StealthBadger747",
+        "lastModified": 1751148639,
+        "narHash": "sha256-VbDtl4EEI8d0sWc5h7SArwey5Du+kdebqaUomSLZmPE=",
+        "owner": "igor-ramazanov",
         "repo": "headplane",
-        "rev": "82810b769520802202600a9a4a4d53f1e639d837",
+        "rev": "6ccb0f3cea8af0eee38a3ef16cd2af6ad36d6e8f",
         "type": "github"
       },
       "original": {
-        "owner": "StealthBadger747",
-        "ref": "erikp/implement-path-loader",
+        "owner": "igor-ramazanov",
+        "ref": "update-nix-changes-branch",
         "repo": "headplane",
         "type": "github"
       }
