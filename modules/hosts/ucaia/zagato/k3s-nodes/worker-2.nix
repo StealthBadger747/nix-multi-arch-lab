@@ -26,6 +26,9 @@ in {
   # Enable cloud-init network configuration
   services.cloud-init.network.enable = true;
 
+  # Enable userborn service (triggers useSystemdActivation in sops-nix)
+  services.userborn.enable = true;
+
   # SOPS configuration
   sops = {
     defaultSopsFile = ../../../../../secrets/hosts/ucaia/zagato/k3s-secrets.yaml;
@@ -40,39 +43,29 @@ in {
     };
   };
 
-  # inject *only* your Age-key logic; everything else (hostname, SSH keys,
-  # filesystem resize, modules, etc.) is handled by the module’s defaults
-  services.cloud-init.settings = lib.mkMerge [
-    # You can override or extend any of the structured settings here.
-    {
-      bootcmd = [
-        # 1) create the persistent directory
-        "mkdir -p /var/lib/sops-nix"
-
-        # 2) pull 'age_key' out of your meta-data snippet
-        "sh -c 'cloud-init query -f \"{{ ds.meta_data.age_key }}\" > /var/lib/sops-nix/key.txt'"
-        
-        # 3) set proper permissions
-        "chmod 600 /var/lib/sops-nix/key.txt"
-      ];
-    }
-  ];
-
-  # Systemd service to ensure cloud-init completes before SOPS services
-  systemd.services.sops-key-provision = {
-    description = "Wait for cloud-init and provision SOPS keys";
-    after = [ "cloud-init.target" ];
-    wants = [ "cloud-init.target" ];
+  # Extract SOPS age key from cloud-init metadata
+  systemd.services.sops-extract-key = {
+    description = "Extract SOPS age key from cloud-init";
+    wantedBy = [ "sysinit.target" ];
+    after = [ "cloud-final.service" ];
+    wants = [ "cloud-final.service" ];
     
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
-      ExecStartPre = "${pkgs.cloud-init}/bin/cloud-init status --wait";
-      ExecStart = "${pkgs.bash}/bin/bash -c 'while [ ! -f /var/lib/sops-nix/key.txt ]; do sleep 1; done'";
-      TimeoutStartSec = 300;
     };
     
-    wantedBy = [ "multi-user.target" ];
+    script = ''
+      # Wait for cloud-init to complete all phases
+      ${pkgs.cloud-init}/bin/cloud-init status --wait
+      
+      if [ ! -f /var/lib/sops-nix/key.txt ]; then
+        mkdir -p /var/lib/sops-nix
+        ${pkgs.cloud-init}/bin/cloud-init query -f "{{ ds.meta_data.age_key }}" > /var/lib/sops-nix/key.txt
+        chmod 600 /var/lib/sops-nix/key.txt
+        echo "Age key extracted from cloud-init"
+      fi
+    '';
   };
 
   # K3s configuration for a worker node
@@ -83,16 +76,16 @@ in {
     serverAddr = "https://10.0.4.201:6443"; # Address of the first server
   };
 
-  # Ensure K3s waits for the key provisioning
+  # Ensure K3s waits for the key extraction
   systemd.services.k3s = {
-    after = [ "sops-key-provision.service" ];
-    wants = [ "sops-key-provision.service" ];
+    after = [ "sops-extract-key.service" ];
+    wants = [ "sops-extract-key.service" ];
   };
 
-  # Make SOPS secrets depend on the key provisioning service
+  # Make SOPS secrets depend on the key extraction service
   systemd.services.sops-install-secrets = {
-    after = [ "sops-key-provision.service" ];
-    wants = [ "sops-key-provision.service" ];
+    after = [ "sops-extract-key.service" ];
+    wants = [ "sops-extract-key.service" ];
   };
 
   # Open ports needed for K3s worker node
