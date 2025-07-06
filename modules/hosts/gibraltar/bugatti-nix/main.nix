@@ -16,7 +16,7 @@
   };
 
 
-  environment.systemPackages = with pkgs; [
+  environment.systemPackages = (with pkgs; [
     alejandra
     btop
     htop
@@ -40,7 +40,9 @@
     jq
     busybox
     neofetch
-  ];
+  ]) ++ ( with pkgs-unstable; [
+    claude-code
+  ]);
 
   boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
 
