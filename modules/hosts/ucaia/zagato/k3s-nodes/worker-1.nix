@@ -73,7 +73,7 @@ in {
     enable = true;
     role = "agent";
     tokenFile = config.sops.secrets.k3s-cluster-token.path;
-    serverAddr = "https://10.0.4.201:6443"; # Address of the first server
+    serverAddr = "https://10.0.20.11:6443"; # Address of the first server
   };
 
   # Ensure K3s waits for the key extraction

@@ -46,7 +46,7 @@ in {
     enable = true;
     role = "server";
     tokenFile = config.sops.secrets.k3s-cluster-token.path;
-    serverAddr = "https://10.0.4.201:6443";
+    serverAddr = "https://10.0.20.11:6443";
   };
 
   # Open ports needed for K3s

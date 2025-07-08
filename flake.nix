@@ -547,7 +547,7 @@
         };
 
         zagato-master-01 = {
-          hostname = "10.0.4.201";
+          hostname = "10.0.20.11";
           sshUser = "erikp";
           profiles.system = {
             user = "root";
@@ -558,7 +558,7 @@
         };
 
         zagato-master-02 = {
-          hostname = "10.0.4.202";
+          hostname = "10.0.20.12";
           sshUser = "erikp";
           profiles.system = {
             user = "root";
@@ -569,7 +569,7 @@
         };
 
         zagato-master-03 = {
-          hostname = "10.0.4.203";
+          hostname = "10.0.20.13";
           sshUser = "erikp";
           profiles.system = {
             user = "root";
@@ -580,7 +580,7 @@
         };
 
         zagato-worker-01 = {
-          hostname = "10.0.4.204";
+          hostname = "10.0.20.14";
           sshUser = "erikp";
           profiles.system = {
             user = "root";
@@ -591,7 +591,7 @@
         };
 
         zagato-worker-02 = {
-          hostname = "10.0.4.205";
+          hostname = "10.0.20.15";
           sshUser = "erikp";
           profiles.system = {
             user = "root";
