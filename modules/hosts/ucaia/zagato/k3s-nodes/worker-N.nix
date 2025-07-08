@@ -62,7 +62,7 @@ in {
     enable = true;
     role = "agent";
     tokenFile = "/run/k3s/token";
-    serverAddr = "https://10.0.4.201:6443"; # Address of the first server
+    serverAddr = "https://10.0.20.11:6443"; # Address of the first server
   };
 
   # Open ports needed for K3s worker node
