@@ -96,7 +96,7 @@ in {
       enable = true;
       address = "127.0.0.1";
       port = 8080;
-      package = pkgs-unstable.headscale;
+      # package = pkgs-unstable.headscale;
       settings = {
         server_url = "https://${headscale_fqdn}";
         dns.base_domain = "internal-${headscale_fqdn}";
@@ -164,20 +164,22 @@ in {
         };
         headscale = {
           url = "https://${headscale_fqdn}";
+          config_path = "${headscaleConfig}";
+          config_strict = true;
           # config_path = "${headscaleConfig}";
           # config_strict = false;
-          config_path = "${(pkgs.formats.yaml {}).generate "headscale.yml" (
-            lib.recursiveUpdate
-            config.services.headscale.settings
-            {
-              acme_email = "/dev/null";
-              tls_cert_path = "/dev/null";
-              tls_key_path = "/dev/null";
-              policy.path = "/dev/null";
-              oidc.client_secret_path = "/dev/null";
-            }
-          )}";
-          config_strict = true;
+          # config_path = "${(pkgs.formats.yaml {}).generate "headscale.yml" (
+          #   lib.recursiveUpdate
+          #   config.services.headscale.settings
+          #   {
+          #     acme_email = "/dev/null";
+          #     tls_cert_path = "/dev/null";
+          #     tls_key_path = "/dev/null";
+          #     policy.path = "/dev/null";
+          #     oidc.client_secret_path = "/dev/null";
+          #   }
+          # )}";
+          # config_strict = true;
         };
         integration.proc.enabled = true;
         oidc = {
