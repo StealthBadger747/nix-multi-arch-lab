@@ -19,11 +19,12 @@ in {
     filenameSuffix = hostName;
     qemuConf = {
       name = hostName;
-      net0 = "virtio=D2:A8:F3:12:B9:E4,bridge=vmbr0,firewall=1";
+      net0 = "virtio=D2:A8:F3:12:B9:E4,bridge=vmbr0,tag=20,firewall=1";
     };
   };
 
   # Enable cloud-init network configuration
+  services.cloud-init.enable = true;
   services.cloud-init.network.enable = true;
 
   # Enable userborn service (triggers useSystemdActivation in sops-nix)
