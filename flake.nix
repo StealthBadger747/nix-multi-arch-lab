@@ -580,7 +580,8 @@
         };
 
         zagato-worker-01 = {
-          hostname = "10.0.20.14";
+          # hostname = "10.0.20.14";
+          hostname = "10.0.4.214";
           sshUser = "erikp";
           profiles.system = {
             user = "root";
