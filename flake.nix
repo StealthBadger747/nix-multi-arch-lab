@@ -25,8 +25,7 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     sops-nix.url = "github:Mic92/sops-nix";
-    authentik-nix.url = "github:marcelcoding/authentik-nix";
-    # authentik-nix.url = "github:nix-community/authentik-nix";
+    authentik-nix.url = "github:nix-community/authentik-nix";
     srvos.url = "github:nix-community/srvos";
     deploy-rs.url = "github:serokell/deploy-rs";
     vulnix = {
