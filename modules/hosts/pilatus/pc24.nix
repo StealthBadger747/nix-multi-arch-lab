@@ -1,4 +1,4 @@
-{ config, pkgs, pkgs-unstable, pkgs-overseerr, lib, nixarr, ... }:
+{ config, pkgs, pkgs-unstable, lib, nixarr, ... }:
 let
   host = "pilatus";
   tld = "parawell.cloud";
@@ -169,7 +169,6 @@ in {
     
     overseerr = {
       enable = true;
-      package = pkgs-overseerr.overseerr;
       stateDir = "/APPS/arr-apps/overseerr";
       openFirewall = true;
     };

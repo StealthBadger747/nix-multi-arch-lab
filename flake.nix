@@ -24,7 +24,6 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
-    nixpkgs-overseerr.url = "github:jf-uu/nixpkgs/overseerr";
     sops-nix.url = "github:Mic92/sops-nix";
     authentik-nix.url = "github:marcelcoding/authentik-nix";
     # authentik-nix.url = "github:nix-community/authentik-nix";
@@ -36,8 +35,7 @@
     };
     flake-utils.url = "github:numtide/flake-utils";
     headplane = {
-      # url = "github:StealthBadger747/headplane/erikp/implement-path-loader";
-      url = "github:igor-ramazanov/headplane/update-nix-changes-branch";
+      url = "github:tale/headplane/next";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     ycotd-python-queue = {
@@ -50,7 +48,7 @@
     };
   };
 
-  outputs = { self, nixpkgs, nixpkgs-unstable, nixpkgs-overseerr, sops-nix, authentik-nix
+  outputs = { self, nixpkgs, nixpkgs-unstable, sops-nix, authentik-nix
     , srvos, deploy-rs, vulnix, flake-utils, headplane, ycotd-python-queue, nixarr }:
     let
       # Systems we want to support
@@ -70,16 +68,6 @@
       # Helper function to initialize pkgs-unstable
       mkPkgsUnstable = system:
         import nixpkgs-unstable {
-          inherit system;
-          config.allowUnfree = true;
-          crossSystem = if system == "aarch64-linux" then {
-            config = "aarch64-unknown-linux-gnu";
-            system = "aarch64-linux";
-          } else null;
-        };
-
-      mkCustomExtraPackages = system:
-        import nixpkgs-overseerr {
           inherit system;
           config.allowUnfree = true;
           crossSystem = if system == "aarch64-linux" then {
@@ -282,7 +270,6 @@
           ];
           specialArgs = {
             pkgs-unstable = mkPkgsUnstable "x86_64-linux";
-            pkgs-overseerr = mkCustomExtraPackages "x86_64-linux";
             inherit nixarr;
           };
         };

@@ -3,13 +3,13 @@
   config,
   lib,
   pkgs,
-  pkgs-overseerr ? null,
+  pkgs-unstable,
   ...
 }:
 with lib; let
   cfg = config.nixarr.overseerr;
   nixarr = config.nixarr;
-  pkg = if pkgs-overseerr != null then pkgs-overseerr.overseerr else pkgs.overseerr;
+  pkg = pkgs-unstable.overseerr;
 in {
   options.nixarr.overseerr = {
     enable = mkOption {
