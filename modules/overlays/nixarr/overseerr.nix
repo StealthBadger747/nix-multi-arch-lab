@@ -121,7 +121,6 @@ in {
         User = cfg.user;
         Group = cfg.group;
         ExecStart = "${cfg.package}/bin/overseerr";
-        WorkingDirectory = "${cfg.package}/libexec/overseerr/deps/overseerr";
         Restart = "on-failure";
         RestartSec = "5s";
         

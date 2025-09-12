@@ -117,11 +117,33 @@ in {
 
     flaresolverr = {
       enable = true;
-      package = pkgs-unstable.flaresolverr;
+      # package = pkgs-unstable.flaresolverr;
       openFirewall = true;
+    };
+    tor = {
+      enable = true;
+
+      # this is the critical switch that prevents SOCKSPort 0
+      client.enable = true;
+
+      # configure the SOCKS listener
+      client.socksListenAddress = {
+        addr = "127.0.0.1";
+        port = 9050;
+        IsolateSOCKSAuth = true;
+      };
+
+      settings = {
+        SocksPolicy = [
+          "accept 127.0.0.1"
+          "reject *"
+        ];
+      };
     };
 
   };
+
+  
 
   nixarr = {
     enable = true;
