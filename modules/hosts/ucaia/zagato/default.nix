@@ -82,6 +82,7 @@
     hashedPassword =
       "$6$e75Jf/dlhJJ.dF49$9vAbUWwYqrGqtT4I/T6ycHvEM6Z23n9Z3jKunoXwdBVS5rXhWW6VEGRohQCvltPS9lP8t0PL6bLMzWGIEAW.n/";
     openssh.authorizedKeys.keys = [
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIENMEKtS2wB5NlWSAtsoKTss1B0UcD/TeDbMJgVdUKXJ"
     ];
   };
   users.users.erikp = {
