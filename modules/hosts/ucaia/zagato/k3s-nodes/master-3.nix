@@ -13,7 +13,12 @@ in {
   imports = [
     ../default.nix
     ../proxmox-settings.nix
+    ../keepalived.nix
   ];
+
+  services.keepalived.vrrpInstances.K3S_API = {
+    priority = 150;
+  };
 
   proxmox = {
     filenameSuffix = hostName;

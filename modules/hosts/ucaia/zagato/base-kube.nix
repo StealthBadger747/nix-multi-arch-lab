@@ -20,6 +20,7 @@
 
   networking = {
     nameservers = ["10.0.4.12" "10.0.4.13" "1.1.1.1"];
+    nftables.enable = true;
     firewall = {
       enable = true;
       allowedTCPPorts = [
@@ -37,6 +38,13 @@
       allowedUDPPorts = [
         8472    # Flannel VXLAN
       ];
+      # vrrp is keepalived related
+      extraInputRules = ''
+        ip  protocol vrrp accept
+        ip6 nexthdr   vrrp accept
+        iifname "eth0" ip  protocol vrrp accept
+        iifname "eth0" ip6 nexthdr   vrrp accept
+      '';
     };
   };
 }
