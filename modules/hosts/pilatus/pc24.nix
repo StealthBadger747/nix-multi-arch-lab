@@ -38,11 +38,6 @@ in {
         mode = "0400";
         restartUnits = [ "inadyn.service" ];
       };
-      lego = {
-        owner = "acme";
-        group = "acme";
-        mode = "0400";
-      };
       airvpn-san-jose-imai-conf = {
         sopsFile = ../../../secrets/hosts/pilatus/pc24.yaml;
         owner = "root";
@@ -57,17 +52,6 @@ in {
   };
 
   security.polkit.enable = true;
-  security.acme = {
-    acceptTerms = true;
-    defaults.email = "parawell.erik@gmail.com";
-    certs.${fqdn} = {
-      dnsProvider = "namecheap";
-      email = "parawell.erik@gmail.com";
-      environmentFile = config.sops.secrets.lego.path;
-      group = "nginx";
-    };
-  };
-
   time.timeZone = timezone;
 
   services = {
@@ -96,8 +80,6 @@ in {
       recommendedProxySettings = true;
 
       virtualHosts.${fqdn} = {
-        forceSSL = true;
-        useACMEHost = fqdn;
         locations."/" = {
           root = "/var/www/html";  # Default root directory, update as needed
         };
@@ -147,7 +129,7 @@ in {
 
   nixarr = {
     enable = true;
-    mediaUsers = [ "plex" "erikp" ];
+    mediaUsers = [ "plex" "jellyfin" "erikp" ];
     mediaDir = "/BIGBOY/nixarr/media";
     vpn = {
       enable = true;
@@ -192,6 +174,12 @@ in {
     overseerr = {
       enable = true;
       stateDir = "/APPS/arr-apps/overseerr";
+      openFirewall = true;
+    };
+    jellyfin = {
+      enable = true;
+      package = pkgs-unstable.jellyfin;
+      stateDir = "/APPS/jellyfin";
       openFirewall = true;
     };
   };
