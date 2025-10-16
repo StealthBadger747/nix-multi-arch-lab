@@ -8,7 +8,10 @@
   ...
 }:
 let
-
+  fsLabel    = "containerd";
+  mountPoint = "/var/lib/rancher/k3s/agent/containerd";
+  diskById   = "/dev/disk/by-id/scsi-QEMU_QEMU_HARDDISK_CONTAINERD01";
+  devUnit    = "dev-disk-by\\x2did-scsi\\x2dQEMU_QEMU_HARDDISK_CONTAINERD01.device";
 in {
   imports = [
     ../default.nix
@@ -25,19 +28,73 @@ in {
     qemuGuest.enable = true;
   };
 
-  # # SOPS configuration
-  # sops = {
-  #   defaultSopsFile = ../../../../../secrets/hosts/ucaia/zagato/k3s-secrets.yaml;
-  #   defaultSopsFormat = "yaml";
-  #   age.keyFile = "/run/age/age.key";
-  #   age.generateKey = false;
-  #   secrets = {
-  #     k3s-cluster-token = {
-  #       mode = "0400";
-  #       restartUnits = [ "k3s.service" ];
-  #     };
-  #   };
-  # };
+  # Disable the static hostname generation
+  networking.hostName = lib.mkForce "";
+
+  systemd.tmpfiles.rules = [ "d ${mountPoint} 0755 root root -" ];
+
+  systemd.services.mkfs-containerd = {
+    description = "Format containerd disk (ephemeral)";
+    wants     = [ devUnit ];
+    after     = [ devUnit ];
+    wantedBy  = [ "multi-user.target" ];
+    serviceConfig = { Type = "oneshot"; RemainAfterExit = true; };
+    path = [ pkgs.e2fsprogs pkgs.util-linux pkgs.coreutils ];
+    script = ''
+      set -euo pipefail
+      DISK='${diskById}'
+      if [ ! -b "$DISK" ]; then
+        echo "mkfs-containerd: $DISK not present; skipping."
+        exit 0
+      fi
+      mkfs.ext4 -F -E lazy_itable_init=1,lazy_journal_init=1,nodiscard -L ${fsLabel} "$DISK"
+    '';
+  };
+
+  systemd.mounts = [
+    {
+      what    = "LABEL=${fsLabel}";
+      where   = mountPoint;
+      type    = "ext4";
+      options = "noatime,x-systemd.device-timeout=5s,nofail";
+      requires = [ "mkfs-containerd.service" ];
+      after    = [ "mkfs-containerd.service" devUnit ];
+      unitConfig.JobTimeoutSec = "20s";
+    }
+  ];
+
+  systemd.services.wait-containerd-mount = {
+    description = "Wait for containerd mount if disk present";
+    wantedBy = [ "multi-user.target" ];
+    wants = [ "var-lib-rancher-k3s-agent-containerd.mount" ];
+    after = [ "var-lib-rancher-k3s-agent-containerd.mount" ];
+    serviceConfig = { 
+      Type = "oneshot"; 
+      RemainAfterExit = true;
+    };
+    path = [ pkgs.util-linux ];
+    script = ''
+      set -euo pipefail
+      if [ ! -b '${diskById}' ]; then
+        echo "No containerd disk present, continuing without mount"
+        exit 0
+      fi
+      
+      for i in {1..20}; do
+        if mountpoint -q '${mountPoint}'; then
+          echo "Containerd mount ready"
+          exit 0
+        fi
+        sleep 1
+      done
+      
+      echo "Containerd disk present but mount failed" >&2
+      exit 1
+    '';
+  };
+
+  systemd.services.k3s.wants = [ "wait-containerd-mount.service" ];
+  systemd.services.k3s.after = [ "wait-containerd-mount.service" ];
 
   services.cloud-init.settings = lib.mkMerge [
     # You can override or extend any of the structured settings here.
@@ -47,13 +104,16 @@ in {
         "mkdir -p /run/k3s"
 
         # 2) pull 'age_key' out of your meta-data snippet
-        "sh -c 'cloud-init query -f \"{{ ds.meta_data.age_key }}\" > /run/k3s/token'"
+        "sh -c 'cloud-init query -f \"{{ ds.meta_data.k3s_token }}\" > /run/k3s/token'"
       ];
 
       runcmd = [
         # 3) lock it down
         "chmod 0400 /run/k3s/token"
       ];
+
+      # Let cloud-init manage hostname
+      preserve_hostname = false;
     }
   ];
 

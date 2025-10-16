@@ -60,6 +60,14 @@
       cmdLine      = "init=/init console=ttyS0,115200 netboot=true";
       debug        = true;
     };
+
+    nginx = {
+      enable = true;
+      virtualHosts."10.0.20.2" = {
+        root = "/srv/tftp";          # so /bzImage and /initrd are reachable
+        extraConfig = "autoindex on;";
+      };
+    };
   };
 
   # Ensure TFTP directory exists and has proper permissions
@@ -76,6 +84,9 @@
       68   # DHCP
       69   # TFTP
       4011 # PXE
+    ];
+    allowedTCPPorts = [
+      80   # HTTP
     ];
   };
 }
