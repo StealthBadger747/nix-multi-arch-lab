@@ -263,7 +263,7 @@
             "${nixpkgs}/nixos/modules/virtualisation/proxmox-image.nix"
             ./modules/configs/common.nix
             ./modules/hosts/pilatus/pc24.nix
-            ./modules/hosts/pilatus/nvidia-headless.nix
+            ./modules/hosts/pilatus/intel-headless.nix
             sops-nix.nixosModules.sops
             nixarr.nixosModules.default
           ];
