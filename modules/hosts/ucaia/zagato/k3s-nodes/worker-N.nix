@@ -10,8 +10,9 @@
 let
   fsLabel    = "containerd";
   mountPoint = "/var/lib/rancher/k3s/agent/containerd";
-  diskById   = "/dev/disk/by-id/scsi-QEMU_QEMU_HARDDISK_CONTAINERD01";
-  devUnit    = "dev-disk-by\\x2did-scsi\\x2dQEMU_QEMU_HARDDISK_CONTAINERD01.device";
+  diskId     = "scsi-0QEMU_QEMU_HARDDISK_CONTAINERD01";
+  diskById   = "/dev/disk/by-id/${diskId}";
+  devUnit    = "dev-disk-by\\x2did-${lib.replaceStrings ["-"] ["\\x2d"] diskId}.device";
 in {
   imports = [
     ../default.nix

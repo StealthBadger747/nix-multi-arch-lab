@@ -261,6 +261,7 @@
           sops
           nano
           nh
+          bashInteractive
         ]) ++ ( with pkgs-unstable; [
           # oci-cli
           # opentofu
