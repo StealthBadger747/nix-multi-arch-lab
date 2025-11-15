@@ -29,8 +29,8 @@ jobs:
             experimental-features = nix-command flakes
             access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
       
-      - name: Setup Flakehub Cache
-        uses: DeterminateSystems/flakehub-cache-action@main
+      # - name: Setup Flakehub Cache
+      #   uses: DeterminateSystems/flakehub-cache-action@main
 
       - name: Configure SSH
         uses: 1password/load-secrets-action@v2
