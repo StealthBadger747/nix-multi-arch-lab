@@ -73,35 +73,67 @@ jobs:
           chmod 644 ~/.ssh/known_hosts
           chmod 600 ~/.ssh/config
       - name: Debug SSH setup
+        env:
+          DEPLOY_KEY_SECRET: ${{ secrets.DEPLOY_SSH_KEY }}
         run: |
           set -euo pipefail
+
+          count_bytes() {
+            local input="${1-}"
+            if [ -z "$input" ]; then
+              echo 0
+            else
+              # wc -c pads with spaces; strip them so logs stay tidy.
+              printf %s "$input" | wc -c | tr -d ' '
+            fi
+          }
+
           echo "OpenSSH: $(ssh -V 2>&1)"
           echo "OpenSSL: $(openssl version 2>/dev/null || echo 'openssl not found')"
-          echo "DEPLOY_SSH_KEY env length: $( [ -n \"${{ secrets.DEPLOY_SSH_KEY }}\" ] && echo -n \"${{ secrets.DEPLOY_SSH_KEY }}\" | wc -c || echo 0 )"
-          echo "GITHUB_SSH_KEY env length: $( [ -n \"${GITHUB_SSH_KEY:-}\" ] && echo -n \"${GITHUB_SSH_KEY}\" | wc -c || echo 0 )"
-          if [ -n \"${GITHUB_SSH_KEY_PASSPHRASE:-}\" ]; then
-            echo \"GITHUB_SSH_KEY_PASSPHRASE set (length: $(echo -n \"${GITHUB_SSH_KEY_PASSPHRASE}\" | wc -c))\"
+
+          echo "DEPLOY_SSH_KEY secret length: $(count_bytes "${DEPLOY_KEY_SECRET-}")"
+          if [ -n "${GITHUB_SSH_KEY:-}" ]; then
+            echo "GITHUB_SSH_KEY env length: $(count_bytes "${GITHUB_SSH_KEY}")"
           else
-            echo \"GITHUB_SSH_KEY_PASSPHRASE not set\"
+            echo "GITHUB_SSH_KEY env missing"
           fi
+
+          if [ -n "${GITHUB_SSH_KEY_PASSPHRASE:-}" ]; then
+            echo "GITHUB_SSH_KEY_PASSPHRASE set (length: $(count_bytes "${GITHUB_SSH_KEY_PASSPHRASE}") )"
+          else
+            echo "GITHUB_SSH_KEY_PASSPHRASE not set"
+          fi
+
           if [ -f ~/.ssh/id_ed25519 ]; then
             stat -c 'id_ed25519 perms:%a owner:%U:%G size:%s' ~/.ssh/id_ed25519 || true
             file ~/.ssh/id_ed25519 || true
             ssh-keygen -lf ~/.ssh/id_ed25519 || true
           else
-            echo \"id_ed25519 missing\"
+            echo "id_ed25519 missing"
           fi
+
           if [ -f ~/.ssh/id_ed25519_github ]; then
             stat -c 'id_ed25519_github perms:%a owner:%U:%G size:%s' ~/.ssh/id_ed25519_github || true
             file ~/.ssh/id_ed25519_github || true
             ssh-keygen -lf ~/.ssh/id_ed25519_github || true
           else
-            echo \"id_ed25519_github missing\"
+            echo "id_ed25519_github missing"
           fi
-          echo \"known_hosts entries: $(wc -l < ~/.ssh/known_hosts)\"
-          echo \"SSH config:\"
-          sed 's/^/  /' ~/.ssh/config || true
-          echo \"GitHub connectivity test (BatchMode):\"
+
+          if [ -f ~/.ssh/known_hosts ]; then
+            echo "known_hosts entries: $(wc -l < ~/.ssh/known_hosts)"
+          else
+            echo "known_hosts missing"
+          fi
+
+          if [ -f ~/.ssh/config ]; then
+            echo "SSH config:"
+            sed 's/^/  /' ~/.ssh/config || true
+          else
+            echo "SSH config missing"
+          fi
+
+          echo "GitHub connectivity test (BatchMode):"
           ssh -o BatchMode=yes -T git@github.com || true
 
       - name: Build and Deploy Authentik Nix
