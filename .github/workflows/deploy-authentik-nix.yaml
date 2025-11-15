@@ -40,7 +40,7 @@ jobs:
         env:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
           SOPS_AGE_KEY: "op://Github_Actions/nix_age_secret/private_key"
-          GITHUB_SSH_KEY: "op://Github_Actions/github_ssh_key/private key"
+          GITHUB_SSH_KEY: "op://Github_Actions/github_ssh_key/private%20key"
 
       - name: Setup SSH Keys
         run: |
