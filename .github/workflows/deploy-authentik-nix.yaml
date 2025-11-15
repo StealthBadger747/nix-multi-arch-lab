@@ -12,12 +12,12 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - name: Connect to Tailscale
-        uses: tailscale/github-action@v3
-        with:
-          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
-          tags: tag:gha
-          args: --login-server=https://headscale.parawell.cloud
+      # - name: Connect to Tailscale
+      #   uses: tailscale/github-action@v3
+      #   with:
+      #     authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
+      #     tags: tag:gha
+      #     args: --login-server=https://headscale.parawell.cloud
           
       - name: Checkout repository
         uses: actions/checkout@v4
