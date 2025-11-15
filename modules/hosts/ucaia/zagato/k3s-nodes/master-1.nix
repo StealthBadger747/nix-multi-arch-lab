@@ -13,13 +13,18 @@ in {
   imports = [
     ../default.nix
     ../proxmox-settings.nix
+    ../keepalived.nix
   ];
+
+services.keepalived.vrrpInstances.K3S_API = {
+  priority = 152;
+};
 
   proxmox = {
     filenameSuffix = hostName;
     qemuConf = {
       name = hostName;
-      net0 = "virtio=D8:D9:97:59:39:6A,bridge=vmbr0,firewall=1";
+      net0 = "virtio=D8:D9:97:59:39:6A,bridge=vmbr0,tag=20,firewall=1";
     };
   };
 

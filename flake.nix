@@ -142,6 +142,17 @@
             echo "This package can only be built on x86_64-linux systems"
             exit 1
           '';
+
+        aspen-proxmox-image = 
+          let 
+            config = self.nixosConfigurations.aspen-proxmox;
+          in
+          if system == "x86_64-linux"
+          then config.config.system.build.VMA
+          else nixpkgs.legacyPackages.${system}.runCommand "aspen-proxmox-image" {} ''
+            echo "This package can only be built on x86_64-linux systems"
+            exit 1
+          '';
           
         # K3s cluster node images
         k3s-master-1-image = 
@@ -198,6 +209,45 @@
             echo "This package can only be built on x86_64-linux systems"
             exit 1
           '';
+
+        # k3s-worker-N-image = 
+        #   let 
+        #     config = self.nixosConfigurations.k3s-worker-N;
+        #   in
+        #   if system == "x86_64-linux"
+        #   then config.config.system.build.isoImage
+        #   else nixpkgs.legacyPackages.${system}.runCommand "k3s-worker-N-image" {} ''
+        #     echo "This package can only be built on x86_64-linux systems"
+        #     exit 1
+        #   '';
+
+        k3s-worker-N-netboot-image = 
+          let 
+            config = self.nixosConfigurations.k3s-worker-N;
+          in
+          if system == "x86_64-linux"
+          then config.config.system.build.netbootIpxeScript
+          else nixpkgs.legacyPackages.${system}.runCommand "k3s-worker-N-image" {} ''
+            echo "This package can only be built on x86_64-linux systems"
+            exit 1
+          '';
+
+        k3s-worker-N-netboot-files = 
+          let 
+            config = self.nixosConfigurations.k3s-worker-N;
+            pkgs = nixpkgs.legacyPackages.${system};
+          in
+          if system == "x86_64-linux"
+          then pkgs.runCommand "k3s-worker-N-netboot-files" {} ''
+            mkdir -p $out
+            cp ${config.config.system.build.kernel}/bzImage $out/bzImage
+            cp ${config.config.system.build.netbootRamdisk}/initrd $out/initrd
+            cp ${config.config.system.build.netbootIpxeScript}/netboot.ipxe $out/netboot.ipxe
+          ''
+          else nixpkgs.legacyPackages.${system}.runCommand "k3s-worker-N-netboot-files" {} ''
+            echo "This package can only be built on x86_64-linux systems"
+            exit 1
+          '';
       };
 
       # Dev shell is now per-system
@@ -211,6 +261,7 @@
           sops
           nano
           nh
+          bashInteractive
         ]) ++ ( with pkgs-unstable; [
           # oci-cli
           # opentofu
@@ -345,6 +396,16 @@
           specialArgs = { pkgs-unstable = mkPkgsUnstable "x86_64-linux"; };
         };
 
+        aspen-proxmox = nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          modules = [
+            "${nixpkgs}/nixos/modules/virtualisation/proxmox-image.nix"
+            ./modules/hosts/ucaia/aspen/default.nix
+            sops-nix.nixosModules.sops
+          ];
+          specialArgs = { pkgs-unstable = mkPkgsUnstable "x86_64-linux"; };
+        };
+
         # K3s Cluster Node 1 (Master)
         k3s-master-1 = nixpkgs.lib.nixosSystem {
           system = "x86_64-linux";
@@ -395,6 +456,18 @@
           modules = [
             "${nixpkgs}/nixos/modules/virtualisation/proxmox-image.nix"
             ./modules/hosts/ucaia/zagato/k3s-nodes/worker-2.nix
+            sops-nix.nixosModules.sops
+          ];
+          specialArgs = { pkgs-unstable = mkPkgsUnstable "x86_64-linux"; };
+        };
+
+        # K3s Cluster Node N (Worker)
+        k3s-worker-N = nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          modules = [
+            # "${nixpkgs}/nixos/modules/virtualisation/proxmox-image.nix"
+            "${nixpkgs}/nixos/modules/installer/netboot/netboot-minimal.nix"
+            ./modules/hosts/ucaia/zagato/k3s-nodes/worker-N.nix
             sops-nix.nixosModules.sops
           ];
           specialArgs = { pkgs-unstable = mkPkgsUnstable "x86_64-linux"; };
@@ -463,8 +536,19 @@
           };
         };
 
+        aspen = {
+          hostname = "10.0.20.2";
+          sshUser = "erikp";
+          profiles.system = {
+            user = "root";
+            path = deploy-rs.lib."x86_64-linux".activate.nixos
+              self.nixosConfigurations.aspen-proxmox;
+            magicRollback = true;
+          };
+        };
+
         zagato-master-01 = {
-          hostname = "10.0.4.201";
+          hostname = "10.0.20.11";
           sshUser = "erikp";
           profiles.system = {
             user = "root";
@@ -475,7 +559,7 @@
         };
 
         zagato-master-02 = {
-          hostname = "10.0.4.202";
+          hostname = "10.0.20.12";
           sshUser = "erikp";
           profiles.system = {
             user = "root";
@@ -486,7 +570,7 @@
         };
 
         zagato-master-03 = {
-          hostname = "10.0.4.203";
+          hostname = "10.0.20.13";
           sshUser = "erikp";
           profiles.system = {
             user = "root";
@@ -497,7 +581,8 @@
         };
 
         zagato-worker-01 = {
-          hostname = "10.0.4.204";
+          # hostname = "10.0.20.14";
+          hostname = "10.0.4.214";
           sshUser = "erikp";
           profiles.system = {
             user = "root";
@@ -508,7 +593,7 @@
         };
 
         zagato-worker-02 = {
-          hostname = "10.0.4.205";
+          hostname = "10.0.20.15";
           sshUser = "erikp";
           profiles.system = {
             user = "root";

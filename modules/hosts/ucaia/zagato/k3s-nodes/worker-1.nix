@@ -19,18 +19,22 @@ in {
     filenameSuffix = hostName;
     qemuConf = {
       name = hostName;
-      net0 = "virtio=D2:A8:F3:12:B9:E4,bridge=vmbr0,firewall=1";
+      net0 = "virtio=D2:A8:F3:12:B9:E4,bridge=vmbr0,tag=20,firewall=1";
     };
   };
 
   # Enable cloud-init network configuration
+  services.cloud-init.enable = true;
   services.cloud-init.network.enable = true;
+
+  # Enable userborn service (triggers useSystemdActivation in sops-nix)
+  services.userborn.enable = true;
 
   # SOPS configuration
   sops = {
     defaultSopsFile = ../../../../../secrets/hosts/ucaia/zagato/k3s-secrets.yaml;
     defaultSopsFormat = "yaml";
-    age.keyFile = "/run/age/age.key";
+    age.keyFile = "/var/lib/sops-nix/key.txt";
     age.generateKey = false;
     secrets = {
       k3s-cluster-token = {
@@ -40,43 +44,49 @@ in {
     };
   };
 
-  systemd.services.cloud-init = {
-    unitConfig = {
-      # Don't let cloud-init failure affect other services
-      StartLimitBurst = 0;
-    };
+  # Extract SOPS age key from cloud-init metadata
+  systemd.services.sops-extract-key = {
+    description = "Extract SOPS age key from cloud-init";
+    wantedBy = [ "sysinit.target" ];
+    after = [ "cloud-final.service" ];
+    wants = [ "cloud-final.service" ];
+    
     serviceConfig = {
-      # Make the service succeed even if cloud-init exits with code 1
-      SuccessExitStatus = [ 0 1 ];
+      Type = "oneshot";
+      RemainAfterExit = true;
     };
+    
+    script = ''
+      # Wait for cloud-init to complete all phases
+      ${pkgs.cloud-init}/bin/cloud-init status --wait
+      
+      if [ ! -f /var/lib/sops-nix/key.txt ]; then
+        mkdir -p /var/lib/sops-nix
+        ${pkgs.cloud-init}/bin/cloud-init query -f "{{ ds.meta_data.age_key }}" > /var/lib/sops-nix/key.txt
+        chmod 600 /var/lib/sops-nix/key.txt
+        echo "Age key extracted from cloud-init"
+      fi
+    '';
   };
-
-  # inject *only* your Age-key logic; everything else (hostname, SSH keys,
-  # filesystem resize, modules, etc.) is handled by the module’s defaults
-  services.cloud-init.settings = lib.mkMerge [
-    # You can override or extend any of the structured settings here.
-    {
-      bootcmd = [
-        # 1) create the dir on the tmpfs
-        "mkdir -p /run/age"
-
-        # 2) pull 'age_key' out of your meta-data snippet
-        "sh -c 'cloud-init query -f \"{{ ds.meta_data.age_key }}\" > /run/age/age.key'"
-      ];
-
-      runcmd = [
-        # 3) lock it down
-        "chmod 0400 /run/age/age.key"
-      ];
-    }
-  ];
 
   # K3s configuration for a worker node
   services.k3s = {
     enable = true;
     role = "agent";
     tokenFile = config.sops.secrets.k3s-cluster-token.path;
-    serverAddr = "https://10.0.4.201:6443"; # Address of the first server
+    serverAddr = "https://10.0.20.11:6443"; # Address of the first server
+  };
+
+  # Ensure K3s waits for the key extraction
+  systemd.services.k3s = {
+    after = [ "sops-extract-key.service" ];
+    wants = [ "sops-extract-key.service" ];
+  };
+
+  # Make SOPS secrets depend on the key extraction service
+  systemd.services.sops-install-secrets = {
+    after = [ "sops-extract-key.service" ];
+    requires = [ "sops-extract-key.service" ];
   };
 
   # Open ports needed for K3s worker node

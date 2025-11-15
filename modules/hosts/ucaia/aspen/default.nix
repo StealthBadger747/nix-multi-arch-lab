@@ -6,7 +6,26 @@
   pkgs,
   pkgs-unstable,
   ...
-}: {
+}: let
+  hostName = "aspen";
+in {
+  networking.hostName = hostName;
+
+  proxmox = {
+    filenameSuffix = hostName;
+    qemuConf = {
+      name = hostName;
+      net0 = "virtio=6C:1C:2C:BC:6A:A4,bridge=vmbr1,firewall=0";
+    };
+  };
+
+  # Enable cloud-init network configuration
+  services.cloud-init.network.enable = true;
+
+  imports = [
+    ./services.nix
+    ./proxmox-settings.nix
+  ];
 
   nix.settings = {
     substituters = [
@@ -28,11 +47,8 @@
     ];
   };
 
-  imports = [
-    ./base-kube.nix
-  ];
-
   environment.systemPackages = with pkgs; [
+    alejandra
     btop
     htop
     tmux
@@ -44,6 +60,7 @@
     pciutils
     file
     openssl
+    cachix
     sops
     nmap
     jq
@@ -52,7 +69,6 @@
   ];
 
   boot.tmp.cleanOnBoot = true;
-
   security.polkit.enable = true;
 
   services = {
@@ -63,6 +79,7 @@
         PermitRootLogin = "no";
       };
     };
+
   };
 
   # Disable unnecessary services and features
@@ -73,7 +90,6 @@
   services.printing.enable = false;
   services.avahi.enable = false;
 
-  # Define a user account. Don't forget to set a password with 'passwd'.
   users.users.connorgolden = {
     isNormalUser = true;
     group = "users";
@@ -82,9 +98,11 @@
     hashedPassword =
       "$6$e75Jf/dlhJJ.dF49$9vAbUWwYqrGqtT4I/T6ycHvEM6Z23n9Z3jKunoXwdBVS5rXhWW6VEGRohQCvltPS9lP8t0PL6bLMzWGIEAW.n/";
     openssh.authorizedKeys.keys = [
+      "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDHnTKk78bO1hz+DkdeV3Tjcye+mxR58tgccQJzNOxfFefdRBagCMC6qtd2H/YUsWYSxzNpRWDadrBmXEIJ5h/YTMK9rD6gvvRnAUbtSnrsM8KQzaqohZ/Ouv1gkVicqe7MHag5ZiC8QDa8zIaHgqPalnEcj8v7mo7/+CcDdmECZ0bKi3m1oQK8nB4LJkGqv03aO/tdaRTa56nsbtRoqjSdkjT2tetgiA1+Ah65TbhkitMzQN3OVLoFEW4zdynxDDUuPpWajFefa/eGIQbfoQHwpqhSw6OZdBKhWlTLR2BQ0oofu49+kAUu7PLasaxArAeLWolX8CJHED36gsupay5XlipgxG8teBJ3EWffWc1fZ2c44gBlNlhPExC5Y6gLI6YnPSajnMsKJLySz2e52Cc3VdsLTaeAi+/7Pc/jH5yNeBvfjKP/VV8GD9ClDl3fNmSBAZawhml400OjaKel7scAJjygxKSHdpR9DQ2IphsKDd9a64cvIROX+kt4udeVhk8= connorgolden@FW-13"
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIENMEKtS2wB5NlWSAtsoKTss1B0UcD/TeDbMJgVdUKXJ"
     ];
   };
+
   users.users.erikp = {
     isNormalUser = true;
     group = "users";
@@ -97,7 +115,17 @@
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKOPFxVGGxI4wBUu1SIgWE6Sr7CSBHNZebXDpSHITxC9"
     ];
   };
+
   security.sudo.wheelNeedsPassword = false;
+
+  networking = {
+    nameservers = ["1.1.1.1" "8.8.4.4" "8.8.8.8" "9.9.9.9"];
+    firewall = {
+      enable = true;
+      allowedTCPPorts = [ 22 53 ];
+      allowedUDPPorts = [ 53 67 ];
+    };
+  };
 
   # Select internationalisation properties.
   i18n.defaultLocale = "en_US.UTF-8";
@@ -124,8 +152,6 @@
     };
   };
 
-  # Some programs need SUID wrappers, can be configured further or are
-  # started in user sessions.
   programs.mtr.enable = true;
   programs.gnupg.agent = {
     enable = true;

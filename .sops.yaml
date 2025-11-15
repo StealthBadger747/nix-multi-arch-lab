@@ -4,10 +4,13 @@ keys:
   - &oci_authentik age1hj5dyl0wzlq92ms2hrut6he05dqv0pknlv7wpyv2jywhz2hqwe9qgpt5dl
   - &pc_24 age1y2g734aqge4lsvmf8dw6s5rc8rkd0scmfwvxm3nlat6tu7y60a2s94yn0l
   - &erik_mbp age17fq29yexw9rf30je5xp86hdda6tgug52sax7vy0af2sngempqv0qwhe4vr
-  - &gha_ci age1tpupgevxd2d50zv95c098c3xkfqed4zk46h8fag9stadj75dvu0q3wx0mk
-  - &zagato_master_1 age1xeltrwejcsrx8l8usdwhw460gl9wc83etwsk0peszhyngv9gns8qcg55rq
-  - &zagato_master_2 age1lm2j0n3e52ve6pdeqjxkuuxs4wgtm0tv2t92x8c5ayjwm0lwxv6qsruxdq
-  - &zagato_master_3 age1nkz255qkgpwy4myetz9dyl5hdh2cpenv52fgpya5gwdc5e9prqhq7ns4lq
+  - &gha_ci age1wcuzeqxgdmv6ev0ufawnu699pyxrqq565tae79sa2jfgnffvlvmq5xd03h
+  - &zagato_master_1 age1w8kqhxusrglw4697ku3r0v6r0x42am4d6l8k6en96uvf7dxyrqeqwf3nsy
+  - &zagato_master_2 age1uev6mgsfdkakk2kps2f6d05t9wckh5ex0dfxfwnfgyt20kyaxp6q0xzkd8
+  - &zagato_master_3 age1ddlymgwgj5p7438pltp6rfdpdwul54gsp0ue8az4jg22x82m7v9qgfev9n
+  - &zagato_worker_1 age1htmygjfah9sxpnkky6nrcn3p5wj2d3ml5d06nux6djefcd2p854qtt8ta3
+  - &zagato_worker_2 age1s6af7sfp4elds8507wjtluuavju82kreqsjx9k8z6e84nwngtglqfracwg
+  - &zagato_shared_cloudinit age1jha9zrxs682wl53767u5gzm26terltfs2lcmd4djyj8t69t4se9qqrq83s
   - &erikp_home_desktop age1wj8d6dpv8xt5m2kpusxzfkfuedp5j4qjszrtg0tnzevgkd3sla8q0wms67
 creation_rules:
   - path_regex: secrets/secrets.yaml$
@@ -56,6 +59,9 @@ creation_rules:
       - *zagato_master_1
       - *zagato_master_2
       - *zagato_master_3
+      - *zagato_worker_1
+      - *zagato_worker_2
+      - *zagato_shared_cloudinit
       - *erik_mbp
       - *gha_ci
       - *erikp_home_desktop
