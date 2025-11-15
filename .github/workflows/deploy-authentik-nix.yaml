@@ -40,13 +40,14 @@ jobs:
         env:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
           SOPS_AGE_KEY: "op://Github_Actions/nix_age_secret/private_key"
-          GITHUB_SSH_KEY: "op://Github_Actions/github_ssh_key/private%20key"
+          GITHUB_SSH_KEY: "op://Github_Actions/github_ssh_key/private key"
 
       - name: Setup SSH Keys
         run: |
+          set -euo pipefail
           mkdir -p ~/.ssh
           echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
-          echo "${{ env.GITHUB_SSH_KEY }}" > ~/.ssh/id_ed25519_github
+          printf '%s\n' "$GITHUB_SSH_KEY" > ~/.ssh/id_ed25519_github
           chmod 600 ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519_github
           # Optional: clear a passphrase if the key from 1Password is encrypted
@@ -140,7 +141,6 @@ jobs:
 
       - name: Build and Deploy Authentik Nix
         env:
-          SOPS_AGE_KEY: ${{ env.SOPS_AGE_KEY }}
           NIX_CONFIG: "access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}"
         run: |
           # Test connection to the builder
