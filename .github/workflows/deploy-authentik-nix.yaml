@@ -48,8 +48,13 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
           printf '%s\n' "$GITHUB_SSH_KEY" > ~/.ssh/id_ed25519_github
-          chmod 600 ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519_github
+          chmod 600 ~/.ssh/id_ed25519 ~/.ssh/id_ed25519_github
+
+          # 1Password may store the key in PKCS8 format; convert it to OpenSSH if needed.
+          if grep -q "BEGIN PRIVATE KEY" ~/.ssh/id_ed25519_github; then
+            ssh-keygen -p -P "" -N "" -m PKCS8 -o -f ~/.ssh/id_ed25519_github >/dev/null
+          fi
+
           # Optional: clear a passphrase if the key from 1Password is encrypted
           if [ -n "${GITHUB_SSH_KEY_PASSPHRASE:-}" ]; then
             ssh-keygen -p -f ~/.ssh/id_ed25519_github -P "$GITHUB_SSH_KEY_PASSPHRASE" -N "" >/dev/null
