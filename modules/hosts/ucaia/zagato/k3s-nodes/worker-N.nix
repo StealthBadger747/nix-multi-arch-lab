@@ -32,6 +32,37 @@ in {
   # Disable the static hostname generation
   networking.hostName = lib.mkForce "";
 
+  # Disable console autologin from netboot-minimal defaults
+  services.getty.autologinUser = lib.mkForce null;
+
+  users = {
+    mutableUsers = false;
+    users = {
+      root = {
+        hashedPassword =
+          "$6$518O2ct8O/.dFXC3$oGwdfF4bgrojKTwE7guwAgtwUaoJAHDJ0IQbrNlahFz75cyaD4ZZ8UHtLFDvrK2v74gu/rErHZJ6W9lMSxQVW.";
+      };
+      kubeadmin = {
+        isNormalUser = true;
+        group = "users";
+        extraGroups = [ "wheel" ];
+        description = "Kubernetes Administrator";
+        hashedPassword =
+          "$6$518O2ct8O/.dFXC3$oGwdfF4bgrojKTwE7guwAgtwUaoJAHDJ0IQbrNlahFz75cyaD4ZZ8UHtLFDvrK2v74gu/rErHZJ6W9lMSxQVW.";
+        openssh.authorizedKeys.keys = [
+          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGvJ7EXvVEEar9mTg0Yy/hpsRisRtFPyKXHTpMNtigo7"
+          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKOPFxVGGxI4wBUu1SIgWE6Sr7CSBHNZebXDpSHITxC9"
+          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIENMEKtS2wB5NlWSAtsoKTss1B0UcD/TeDbMJgVdUKXJ"
+        ];
+      };
+      # Lock the temporary installer account so it cannot be used
+      nixos = lib.mkForce {
+        isNormalUser = true;
+        hashedPassword = "!";
+      };
+    };
+  };
+
   systemd.tmpfiles.rules = [ "d ${mountPoint} 0755 root root -" ];
 
   systemd.services.mkfs-containerd = {
