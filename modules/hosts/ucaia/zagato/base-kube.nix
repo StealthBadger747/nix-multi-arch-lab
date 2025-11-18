@@ -47,4 +47,12 @@
       '';
     };
   };
+
+  # Ensure directories kubelet expects on every node are present early
+  systemd.tmpfiles.rules = [
+    "d /var/lib/rancher/k3s/agent/kubelet 0755 root root -"
+    "d /var/lib/rancher/k3s/agent/kubelet/plugins 0755 root root -"
+    "d /var/lib/rancher/k3s/agent/kubelet/plugins_registry 0755 root root -"
+    "d /var/lib/rancher/k3s/agent/kubelet/pods 0755 root root -"
+  ];
 }
