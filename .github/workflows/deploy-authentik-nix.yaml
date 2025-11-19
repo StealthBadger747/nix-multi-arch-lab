@@ -9,7 +9,7 @@ jobs:
   deploy:
     runs-on: arc-large
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         include:
           - node: oci-authentik
