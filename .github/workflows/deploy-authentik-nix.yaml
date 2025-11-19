@@ -84,10 +84,6 @@ jobs:
           chmod 644 ~/.ssh/known_hosts
           chmod 600 ~/.ssh/config
 
-      - name: Pre-build oci-authentik activation
-        run: |
-          nix build --accept-flake-config ".#deploy.nodes.oci-authentik.profiles.system.path"
-
       - name: Build and Deploy Authentik Nix
         env:
           NIX_CONFIG: |
