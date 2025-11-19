@@ -6,8 +6,34 @@ on:
     # branches: [master]
 
 jobs:
-  build-amd64:
-    runs-on: arc-xl
+  deploy:
+    runs-on: arc-large
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - node: oci-authentik
+            remote: true
+          - node: oci-headscale
+            remote: false
+          - node: pc24-proxmox
+            remote: false
+          - node: aspen
+            remote: false
+          - node: gib-bugatti
+            remote: false
+          - node: giulia
+            remote: false
+          - node: zagato-master-01
+            remote: false
+          - node: zagato-master-02
+            remote: false
+          - node: zagato-master-03
+            remote: false
+          - node: zagato-worker-01
+            remote: false
+          - node: zagato-worker-02
+            remote: false
     permissions:
       contents: read
       id-token: write
@@ -21,9 +47,6 @@ jobs:
     
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Setup QEMU
-        uses: docker/setup-qemu-action@v3
 
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@main
@@ -84,14 +107,16 @@ jobs:
           chmod 644 ~/.ssh/known_hosts
           chmod 600 ~/.ssh/config
 
-      - name: Build and Deploy Authentik Nix
+      - name: Build and Deploy ${{ matrix.node }}
         env:
           NIX_CONFIG: |
             accept-flake-config = true
             access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+        shell: bash
         run: |
-          # Test connection to the builder
-          ssh erikp@150.136.213.118 echo "SSH connection successful"
-
-          # Use deploy-rs with remote build
-          nix develop --accept-flake-config --command deploy --remote-build --skip-checks ".#oci-authentik"
+          echo "⛳ Deploying ${{ matrix.node }} (remote_build=${{ matrix.remote }})"
+          if [ "${{ matrix.remote }}" = "true" ]; then
+            nix develop --accept-flake-config --command deploy --remote-build --skip-checks ".#${{ matrix.node }}"
+          else
+            nix develop --accept-flake-config --command deploy --skip-checks ".#${{ matrix.node }}"
+          fi
