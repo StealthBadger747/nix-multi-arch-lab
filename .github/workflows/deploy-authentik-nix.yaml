@@ -133,7 +133,12 @@ jobs:
         shell: bash
         run: |
           echo "🔍 Checking reachability for ${{ matrix.node }} @ ${{ matrix.hostname }}"
-          ssh -o BatchMode=yes -o ConnectTimeout=10 ${{ matrix.sshUser }}@${{ matrix.hostname }} true
+          ssh \
+            -o BatchMode=yes \
+            -o ConnectTimeout=10 \
+            -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            ${{ matrix.sshUser }}@${{ matrix.hostname }} true
 
       - name: Build and Deploy ${{ matrix.node }}
         env:
