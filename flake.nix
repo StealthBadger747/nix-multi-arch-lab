@@ -487,7 +487,10 @@
               self.nixosConfigurations.oci-authentik;
             magicRollback = true;
             remoteBuild = true;
-            sshOpts = [ "-o" "StrictHostKeyChecking=no" ];
+            sshOpts = [
+              "-o" "StrictHostKeyChecking=no"
+              "-o" "UserKnownHostsFile=/dev/null"
+            ];
           };
         };
 
@@ -499,6 +502,10 @@
             path = deploy-rs.lib."x86_64-linux".activate.nixos
               self.nixosConfigurations.oci-headscale;
             magicRollback = true;
+            sshOpts = [
+              "-o" "StrictHostKeyChecking=no"
+              "-o" "UserKnownHostsFile=/dev/null"
+            ];
           };
         };
 
@@ -510,6 +517,10 @@
             path = deploy-rs.lib."x86_64-linux".activate.nixos
               self.nixosConfigurations.pc24-proxmox;
             magicRollback = true;
+            sshOpts = [
+              "-o" "StrictHostKeyChecking=no"
+              "-o" "UserKnownHostsFile=/dev/null"
+            ];
           };
         };
 
@@ -521,7 +532,10 @@
             path = deploy-rs.lib."x86_64-linux".activate.nixos
               self.nixosConfigurations.bugatti-proxmox-nix;
             magicRollback = true;
-            # remoteBuild = true;
+            sshOpts = [
+              "-o" "StrictHostKeyChecking=no"
+              "-o" "UserKnownHostsFile=/dev/null"
+            ];
           };
         };
 
@@ -533,6 +547,10 @@
             path = deploy-rs.lib."x86_64-linux".activate.nixos
               self.nixosConfigurations.giulia-proxmox;
             magicRollback = true;
+            sshOpts = [
+              "-o" "StrictHostKeyChecking=no"
+              "-o" "UserKnownHostsFile=/dev/null"
+            ];
           };
         };
 
@@ -544,6 +562,10 @@
             path = deploy-rs.lib."x86_64-linux".activate.nixos
               self.nixosConfigurations.aspen-proxmox;
             magicRollback = true;
+            sshOpts = [
+              "-o" "StrictHostKeyChecking=no"
+              "-o" "UserKnownHostsFile=/dev/null"
+            ];
           };
         };
 
@@ -555,6 +577,10 @@
             path = deploy-rs.lib."x86_64-linux".activate.nixos
               self.nixosConfigurations.k3s-master-1;
             magicRollback = true;
+            sshOpts = [
+              "-o" "StrictHostKeyChecking=no"
+              "-o" "UserKnownHostsFile=/dev/null"
+            ];
           };
         };
 
@@ -566,6 +592,10 @@
             path = deploy-rs.lib."x86_64-linux".activate.nixos
               self.nixosConfigurations.k3s-master-2;
             magicRollback = true;
+            sshOpts = [
+              "-o" "StrictHostKeyChecking=no"
+              "-o" "UserKnownHostsFile=/dev/null"
+            ];
           };
         };
 
@@ -577,6 +607,10 @@
             path = deploy-rs.lib."x86_64-linux".activate.nixos
               self.nixosConfigurations.k3s-master-3;
             magicRollback = true;
+            sshOpts = [
+              "-o" "StrictHostKeyChecking=no"
+              "-o" "UserKnownHostsFile=/dev/null"
+            ];
           };
         };
 
@@ -589,6 +623,10 @@
             path = deploy-rs.lib."x86_64-linux".activate.nixos
               self.nixosConfigurations.k3s-worker-1;
             magicRollback = false;
+            sshOpts = [
+              "-o" "StrictHostKeyChecking=no"
+              "-o" "UserKnownHostsFile=/dev/null"
+            ];
           };
         };
 
@@ -600,6 +638,10 @@
             path = deploy-rs.lib."x86_64-linux".activate.nixos
               self.nixosConfigurations.k3s-worker-2;
             magicRollback = false;
+            sshOpts = [
+              "-o" "StrictHostKeyChecking=no"
+              "-o" "UserKnownHostsFile=/dev/null"
+            ];
           };
         };
       };
