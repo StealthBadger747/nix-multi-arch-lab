@@ -3,7 +3,7 @@ name: Build & Deploy
 on:
   # pull_request:
   push:
-    branches: [master]
+    # branches: [master]
 
 jobs:
   deploy:
@@ -60,12 +60,14 @@ jobs:
       contents: read
       id-token: write
     steps:
-      # - name: Connect to Tailscale
-      #   uses: tailscale/github-action@v3
-      #   with:
-      #     authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
-      #     tags: tag:gha
-      #     args: --login-server=https://headscale.parawell.cloud
+      - name: Connect to Tailscale
+        id: tailscale
+        uses: tailscale/github-action@v4
+        with:
+          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
+          tags: tag:gha
+          args: --login-server=https://headscale.parawell.cloud
+          tailscaled-args: --tun=userspace-networking
     
       - name: Checkout repository
         uses: actions/checkout@v4
