@@ -153,5 +153,5 @@ jobs:
           # Test connection to the builder
           ssh erikp@150.136.213.118 echo "SSH connection successful"
 
-          # Use deploy-rs
+          # Use deploy-rs (build locally, then push)
           nix develop --accept-flake-config --command deploy --skip-checks ".#oci-authentik"
