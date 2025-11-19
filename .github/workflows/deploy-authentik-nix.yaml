@@ -153,5 +153,5 @@ jobs:
           # Test connection to the builder
           ssh erikp@150.136.213.118 echo "SSH connection successful"
 
-          # Use deploy-rs with --remote-build flag
-          nix develop --accept-flake-config --command deploy --remote-build --skip-checks ".#oci-authentik"
+          # Use deploy-rs
+          nix develop --accept-flake-config --command deploy --skip-checks ".#oci-authentik"
