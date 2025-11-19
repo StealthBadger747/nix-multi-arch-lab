@@ -486,7 +486,7 @@
             path = deploy-rs.lib."aarch64-linux".activate.nixos
               self.nixosConfigurations.oci-authentik;
             magicRollback = true;
-            remoteBuild = true;
+            remoteBuild = false;
             sshOpts = [ "-o" "StrictHostKeyChecking=no" ];
           };
         };
