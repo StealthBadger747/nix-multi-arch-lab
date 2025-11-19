@@ -15,11 +15,12 @@ jobs:
     steps:
       - name: Connect to Tailscale
         id: tailscale
-        uses: tailscale/github-action@v3
+        uses: tailscale/github-action@v4
         with:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
           tags: tag:gha
           args: --login-server=https://headscale.parawell.cloud
+          tailscaled-args: --tun=userspace-networking
 
       - name: Inspect tailscale session
         shell: bash
