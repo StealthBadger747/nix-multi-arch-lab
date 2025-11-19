@@ -1,0 +1,32 @@
+name: Tailscale Debug
+
+on:
+  workflow_dispatch:
+    inputs:
+      run-command:
+        description: "Shell command to run after connecting"
+        required: false
+        default: "tailscale status"
+
+jobs:
+  tailscale-repro:
+    runs-on: arc-large
+    steps:
+      - name: Connect to Tailscale
+        id: tailscale
+        uses: tailscale/github-action@v3
+        with:
+          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
+          tags: tag:gha
+          args: --login-server=https://headscale.parawell.cloud
+
+      - name: Inspect tailscale session
+        shell: bash
+        run: |
+          set -x
+          tailscale status || true
+          tailscale netcheck || true
+          echo "Running: ${{ github.event.inputs.run-command }}"
+          bash -lc "${{ github.event.inputs.run-command }}"
+          echo "tailscaled log (tail)"
+          tail -n 200 ~/tailscaled.log || true
