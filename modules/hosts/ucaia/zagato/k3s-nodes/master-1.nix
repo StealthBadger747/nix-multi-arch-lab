@@ -52,6 +52,7 @@ services.keepalived.vrrpInstances.K3S_API = {
     role = "server";
     tokenFile = config.sops.secrets.k3s-cluster-token.path;
     clusterInit = true;
+    extraFlags = [ "--tls-san=10.0.20.5" ];
   };
 
 
