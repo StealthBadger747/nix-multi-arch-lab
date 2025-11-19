@@ -13,26 +13,48 @@ jobs:
       matrix:
         include:
           - node: oci-authentik
+            hostname: 150.136.213.118
+            sshUser: erikp
             remote: true
           - node: oci-headscale
+            hostname: 129.153.154.190
+            sshUser: erikp
             remote: false
           - node: pc24-proxmox
+            hostname: 100.64.0.46
+            sshUser: erikp
             remote: false
           - node: aspen
+            hostname: 10.0.20.2
+            sshUser: erikp
             remote: false
           - node: gib-bugatti
+            hostname: 100.64.0.28
+            sshUser: erikp
             remote: false
           - node: giulia
+            hostname: 10.0.4.33
+            sshUser: erikp
             remote: false
           - node: zagato-master-01
+            hostname: 10.0.20.11
+            sshUser: erikp
             remote: false
           - node: zagato-master-02
+            hostname: 10.0.20.12
+            sshUser: erikp
             remote: false
           - node: zagato-master-03
+            hostname: 10.0.20.13
+            sshUser: erikp
             remote: false
           - node: zagato-worker-01
+            hostname: 10.0.4.214
+            sshUser: erikp
             remote: false
           - node: zagato-worker-02
+            hostname: 10.0.20.15
+            sshUser: erikp
             remote: false
     permissions:
       contents: read
@@ -106,6 +128,12 @@ jobs:
           
           chmod 644 ~/.ssh/known_hosts
           chmod 600 ~/.ssh/config
+
+      - name: Check ${{ matrix.node }} reachability
+        shell: bash
+        run: |
+          echo "🔍 Checking reachability for ${{ matrix.node }} @ ${{ matrix.hostname }}"
+          ssh -o BatchMode=yes -o ConnectTimeout=10 ${{ matrix.sshUser }}@${{ matrix.hostname }} true
 
       - name: Build and Deploy ${{ matrix.node }}
         env:
