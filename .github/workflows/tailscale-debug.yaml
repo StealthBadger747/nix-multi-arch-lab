@@ -1,6 +1,7 @@
 name: Tailscale Debug
 
 on:
+  push:
   workflow_dispatch:
     inputs:
       run-command:
