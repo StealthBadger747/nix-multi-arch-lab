@@ -47,7 +47,7 @@
     };
   };
 
-  outputs = { self, nixpkgs, nixpkgs-unstable, sops-nix, authentik-nix
+  outputs = inputs@{ self, nixpkgs, nixpkgs-unstable, sops-nix, authentik-nix
     , srvos, deploy-rs, vulnix, flake-utils, headplane, ycotd-python-queue, nixarr }:
     let
       # Systems we want to support
@@ -403,7 +403,10 @@
             ./modules/hosts/ucaia/aspen/default.nix
             sops-nix.nixosModules.sops
           ];
-          specialArgs = { pkgs-unstable = mkPkgsUnstable "x86_64-linux"; };
+          specialArgs = { 
+            pkgs-unstable = mkPkgsUnstable "x86_64-linux"; 
+            inherit self inputs;
+          };
         };
 
         # K3s Cluster Node 1 (Master)

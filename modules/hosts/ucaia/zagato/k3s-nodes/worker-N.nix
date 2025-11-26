@@ -6,7 +6,7 @@
   pkgs,
   pkgs-unstable,
   ...
-}:
+}: 
 let
   fsLabel    = "containerd";
   # Mount the whole k3s agent tree on the dedicated disk so kubelet emptyDir
@@ -20,6 +20,18 @@ in {
   imports = [
     ../default.nix
   ];
+
+  # Customize the iPXE script to force DHCP and HTTP fetches from Aspen
+  system.build.netbootIpxeScript = lib.mkForce (pkgs.writeTextDir "netboot.ipxe" ''
+    #!ipxe
+    # Use the cmdline variable to allow the user to specify custom kernel params
+    # when chainloading this script from other iPXE scripts like netboot.xyz
+    dhcp
+    set base-url http://10.0.20.2
+    kernel ${"$"}{base-url}/bzImage init=${config.system.build.toplevel}/init initrd=${"$"}{base-url}/initrd ${toString config.boot.kernelParams} ''${cmdline}
+    initrd ${"$"}{base-url}/initrd
+    boot
+  '');
 
   # Cloud init and proxmox integration
   networking.useNetworkd = true;
