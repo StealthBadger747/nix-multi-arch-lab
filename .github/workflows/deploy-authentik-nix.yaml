@@ -12,10 +12,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # - node: oci-authentik
-          #   hostname: 150.136.213.118
-          #   sshUser: erikp
-          #   remote: true
+          - node: oci-authentik
+            hostname: 150.136.213.118
+            sshUser: erikp
+            remote: true
           - node: oci-headscale
             hostname: 129.153.154.190
             sshUser: erikp
@@ -24,30 +24,30 @@ jobs:
           #   hostname: 100.64.0.46
           #   sshUser: erikp
           #   remote: false
-          # - node: aspen
-          #   hostname: 10.0.20.2
+          # - node: gib-bugatti
+          #   hostname: 100.64.0.28
           #   sshUser: erikp
           #   remote: false
-          # # - node: gib-bugatti
-          # #   hostname: 100.64.0.28
-          # #   sshUser: erikp
-          # #   remote: false
           # - node: giulia
           #   hostname: 10.0.4.33
           #   sshUser: erikp
           #   remote: false
-          # - node: zagato-master-01
-          #   hostname: 10.0.20.11
-          #   sshUser: erikp
-          #   remote: false
-          # - node: zagato-master-02
-          #   hostname: 10.0.20.12
-          #   sshUser: erikp
-          #   remote: false
-          # - node: zagato-master-03
-          #   hostname: 10.0.20.13
-          #   sshUser: erikp
-          #   remote: false
+          - node: aspen
+            hostname: 10.0.20.2
+            sshUser: erikp
+            remote: false
+          - node: zagato-master-01
+            hostname: 10.0.20.11
+            sshUser: erikp
+            remote: false
+          - node: zagato-master-02
+            hostname: 10.0.20.12
+            sshUser: erikp
+            remote: false
+          - node: zagato-master-03
+            hostname: 10.0.20.13
+            sshUser: erikp
+            remote: false
     permissions:
       contents: read
       id-token: write

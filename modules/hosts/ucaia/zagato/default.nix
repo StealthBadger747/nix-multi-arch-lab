@@ -52,6 +52,9 @@
   ];
 
   boot.tmp.cleanOnBoot = true;
+  # boot.kernelParams = [
+  #   "mitigations=off"
+  # ];
 
   security.polkit.enable = true;
 
