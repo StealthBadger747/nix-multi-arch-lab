@@ -33,9 +33,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     flake-utils.url = "github:numtide/flake-utils";
-    headplane = {
-      url = "github:tale/headplane/next";
-      inputs.nixpkgs.follows = "nixpkgs";
+    nixpkgs-headplane = {
+      url = "github:igor-ramazanov/nixpkgs/headplane-0.5.10";
     };
     ycotd-python-queue = {
       url = "git+ssh://git@github.com/StealthBadger747/ycotd-python-queue";
@@ -48,7 +47,7 @@
   };
 
   outputs = inputs@{ self, nixpkgs, nixpkgs-unstable, sops-nix, authentik-nix
-    , srvos, deploy-rs, vulnix, flake-utils, headplane, ycotd-python-queue, nixarr }:
+    , srvos, deploy-rs, vulnix, flake-utils, nixpkgs-headplane, ycotd-python-queue, nixarr }:
     let
       # Systems we want to support
       supportedSystems = [ "x86_64-linux" "aarch64-linux" ];
@@ -341,24 +340,66 @@
           };
         };
 
-        # Headscale system
-        oci-headscale = nixpkgs.lib.nixosSystem {
+        # Headscale system (uses nixpkgs-headplane branch with headplane upstreamed)
+        oci-headscale = nixpkgs-headplane.lib.nixosSystem {
           system = "x86_64-linux";
           modules = [
-            "${nixpkgs}/nixos/modules/virtualisation/oci-image.nix"
+            "${nixpkgs-headplane}/nixos/modules/virtualisation/oci-image.nix"
             ./modules/configs/common.nix
             ./modules/hosts/oracle-cloud/free-x86.nix
             sops-nix.nixosModules.sops
-            headplane.nixosModules.headplane
           ];
           specialArgs = { 
             pkgs-unstable = mkPkgsUnstable "x86_64-linux";
-            inherit headplane;
           };
-          pkgs = import nixpkgs {
+          pkgs = import nixpkgs-headplane {
             system = "x86_64-linux";
-            config.allowUnfree = true;
-            overlays = [ headplane.overlays.default ];
+            config = {
+              allowUnfree = true;
+              allowUnsupportedSystem = true;
+            };
+            overlays = [
+              # Provide the platform aliases expected by headplane packages
+              (final: prev: let
+                mk = prev.lib.systems.elaborate;
+              in {
+                lib = prev.lib // {
+                  systems = (prev.lib.systems or {}) // {
+                    aarch64-darwin = mk "aarch64-darwin";
+                    aarch64-linux = mk "aarch64-linux";
+                    x86_64-linux = mk "x86_64-linux";
+                    x86_64-darwin = mk "x86_64-darwin";
+                    i686-linux = mk "i686-linux";
+                  };
+                };
+                # Allow building headplane bits on this host and refresh the pnpm deps hash
+                headplane = prev.headplane.overrideAttrs (old: {
+                  pnpmDeps = old.pnpmDeps.overrideAttrs (_: {
+                    outputHashAlgo = "sha256";
+                    outputHash = "sha256-KyUcaR2Lvu5kT8arr4ZO8rCa5HWXTqmk8C7P8WoYK+c=";
+                  });
+                  meta = (old.meta or {}) // {
+                    platforms = [ prev.stdenv.hostPlatform ];
+                    badPlatforms = [ ];
+                    broken = false;
+                  };
+                });
+                headplane-ssh-wasm = prev.headplane-ssh-wasm.overrideAttrs (old: {
+                  meta = (old.meta or {}) // {
+                    platforms = [ prev.stdenv.hostPlatform ];
+                    badPlatforms = [ ];
+                    broken = false;
+                  };
+                });
+                hp_agent = prev.hp_agent.overrideAttrs (old: {
+                  meta = (old.meta or {}) // {
+                    platforms = [ prev.stdenv.hostPlatform ];
+                    badPlatforms = [ ];
+                    broken = false;
+                  };
+                });
+              })
+            ];
           };
         };
 

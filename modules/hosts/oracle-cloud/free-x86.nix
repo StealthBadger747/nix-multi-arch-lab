@@ -1,4 +1,4 @@
-{ config, pkgs, pkgs-unstable, lib, headplane, ... }:
+{ config, pkgs, pkgs-unstable, lib, ... }:
 let
   headscale_host = "oci-headscale";
   headscale_tld = "parawell.cloud";
