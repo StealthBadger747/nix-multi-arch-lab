@@ -10,6 +10,7 @@ jobs:
     runs-on: arc-large
     strategy:
       fail-fast: false
+      max-parallel: 3
       matrix:
         include:
           - node: oci-authentik
