@@ -614,36 +614,36 @@
           };
         };
 
-        zagato-worker-01 = {
-          # hostname = "10.0.20.14";
-          hostname = "10.0.4.214";
-          sshUser = "erikp";
-          profiles.system = {
-            user = "root";
-            path = deploy-rs.lib."x86_64-linux".activate.nixos
-              self.nixosConfigurations.k3s-worker-1;
-            magicRollback = false;
-            sshOpts = [
-              "-o" "StrictHostKeyChecking=no"
-              "-o" "UserKnownHostsFile=/dev/null"
-            ];
-          };
-        };
+        # zagato-worker-01 = {
+        #   # hostname = "10.0.20.14";
+        #   hostname = "10.0.4.214";
+        #   sshUser = "erikp";
+        #   profiles.system = {
+        #     user = "root";
+        #     path = deploy-rs.lib."x86_64-linux".activate.nixos
+        #       self.nixosConfigurations.k3s-worker-1;
+        #     magicRollback = false;
+        #     sshOpts = [
+        #       "-o" "StrictHostKeyChecking=no"
+        #       "-o" "UserKnownHostsFile=/dev/null"
+        #     ];
+        #   };
+        # };
 
-        zagato-worker-02 = {
-          hostname = "10.0.20.15";
-          sshUser = "erikp";
-          profiles.system = {
-            user = "root";
-            path = deploy-rs.lib."x86_64-linux".activate.nixos
-              self.nixosConfigurations.k3s-worker-2;
-            magicRollback = false;
-            sshOpts = [
-              "-o" "StrictHostKeyChecking=no"
-              "-o" "UserKnownHostsFile=/dev/null"
-            ];
-          };
-        };
+        # zagato-worker-02 = {
+        #   hostname = "10.0.20.15";
+        #   sshUser = "erikp";
+        #   profiles.system = {
+        #     user = "root";
+        #     path = deploy-rs.lib."x86_64-linux".activate.nixos
+        #       self.nixosConfigurations.k3s-worker-2;
+        #     magicRollback = false;
+        #     sshOpts = [
+        #       "-o" "StrictHostKeyChecking=no"
+        #       "-o" "UserKnownHostsFile=/dev/null"
+        #     ];
+        #   };
+        # };
       };
 
       # Deployment checks
