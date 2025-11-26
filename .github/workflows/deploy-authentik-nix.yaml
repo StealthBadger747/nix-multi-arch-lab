@@ -12,10 +12,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - node: oci-authentik
-            hostname: 150.136.213.118
-            sshUser: erikp
-            remote: true
+          # - node: oci-authentik
+          #   hostname: 150.136.213.118
+          #   sshUser: erikp
+          #   remote: true
           - node: oci-headscale
             hostname: 129.153.154.190
             sshUser: erikp

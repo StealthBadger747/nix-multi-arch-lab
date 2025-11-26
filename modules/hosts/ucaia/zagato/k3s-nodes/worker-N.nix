@@ -78,7 +78,10 @@ in {
     };
   };
 
-  systemd.tmpfiles.rules = [ "d ${mountPoint} 0755 root root -" ];
+  systemd.tmpfiles.rules = [
+    "d ${mountPoint} 0755 root root -"
+    "d ${mountPoint}/kubelet 0755 root root -"
+  ];
 
   systemd.services.mkfs-containerd = {
     description = "Format containerd disk (ephemeral)";
@@ -142,6 +145,11 @@ in {
 
   systemd.services.k3s.wants = [ "wait-containerd-mount.service" ];
   systemd.services.k3s.after = [ "wait-containerd-mount.service" ];
+
+  # Put kubelet state on the containerd disk (off tmpfs root)
+  services.k3s.extraFlags = [
+    "--kubelet-arg=root-dir=${mountPoint}/kubelet"
+  ];
 
   services.cloud-init.settings = lib.mkMerge [
     # You can override or extend any of the structured settings here.
