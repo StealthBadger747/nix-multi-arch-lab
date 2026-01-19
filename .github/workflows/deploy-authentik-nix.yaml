@@ -13,14 +13,14 @@ jobs:
       max-parallel: 3
       matrix:
         include:
-          - node: oci-authentik
-            hostname: 150.136.213.118
-            sshUser: erikp
-            remote: true
-          - node: oci-headscale
-            hostname: 129.153.154.190
-            sshUser: erikp
-            remote: false
+          # - node: oci-authentik
+          #   hostname: 150.136.213.118
+          #   sshUser: erikp
+          #   remote: true
+          # - node: oci-headscale
+          #   hostname: 129.153.154.190
+          #   sshUser: erikp
+          #   remote: false
           # - node: pc24-proxmox
           #   hostname: 100.64.0.46
           #   sshUser: erikp
@@ -41,14 +41,14 @@ jobs:
             hostname: 10.0.20.11
             sshUser: erikp
             remote: false
-          - node: zagato-master-02
-            hostname: 10.0.20.12
-            sshUser: erikp
-            remote: false
-          - node: zagato-master-03
-            hostname: 10.0.20.13
-            sshUser: erikp
-            remote: false
+          # - node: zagato-master-02
+          #   hostname: 10.0.20.12
+          #   sshUser: erikp
+          #   remote: false
+          # - node: zagato-master-03
+          #   hostname: 10.0.20.13
+          #   sshUser: erikp
+          #   remote: false
     permissions:
       contents: read
       id-token: write
@@ -66,10 +66,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@main
+        uses: cachix/install-nix-action@v30
         with:
-          determinate: false
-          extra-conf: |
+          extra_nix_config: |
             experimental-features = nix-command flakes
             access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
       
