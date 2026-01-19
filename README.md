@@ -13,6 +13,12 @@ This project uses:
 
 ## Infrastructure
 
+### Automated PXE Booting
+This repository features automated management of PXE boot assets. The `aspen` host is configured to serve netboot files for K3s workers.
+- **Generation**: The [`flake.nix`](file://flake.nix#L234) defines a `k3s-worker-N-netboot-files` package that builds the kernel, initrd, and IPXE scripts.
+- **Deployment**: During `aspen`'s activation (see [`services.nix`](file://modules/hosts/ucaia/aspen/services.nix#L65)), these artifacts are automatically built and installed into `/srv/tftp`.
+- **Zero-Touch Updates**: Updating the worker image definition in the flake and deploying `aspen` automatically updates the netboot server, ensuring workers always boot the latest configuration.
+
 ### Oracle Cloud Infrastructure (OCI) Servers
 
 #### OCI Headscale Server (x86_64)
