@@ -18,6 +18,13 @@
     name = "${config.networking.hostName}-initiatorhost";
   };
 
+  # Disable the iscsid.socket unit to prevent conflicts with iscsid.service.
+  # The openiscsi module in NixOS enables the service at boot (wantedBy=multi-user.target).
+  # If the socket unit is also active, systemd may fail to start the service with:
+  # "Socket service iscsid.service already active, refusing".
+  # Disabling the socket lets the service manage itself directly.
+  systemd.sockets.iscsid.enable = false;
+
   networking = {
     nameservers = ["10.0.4.12" "10.0.4.13" "1.1.1.1"];
     nftables.enable = true;
