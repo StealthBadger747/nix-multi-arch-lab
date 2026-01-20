@@ -114,6 +114,8 @@ in {
     }
   ];
 
+  # CSI plugins mount /var/lib/kubelet in their containers, so keep kubelet state
+  # visible there even though the data lives on the containerd disk.
   fileSystems."/var/lib/kubelet" = {
     device = "${mountPoint}/kubelet";
     fsType = "none";
@@ -159,9 +161,9 @@ in {
   systemd.services.k3s.wants = [ "wait-containerd-mount.service" ];
   systemd.services.k3s.after = [ "wait-containerd-mount.service" ];
 
-  # Put kubelet state on the containerd disk (off tmpfs root)
+  # Keep kubelet root-dir at /var/lib/kubelet so CSI staging paths match.
   services.k3s.extraFlags = [
-    "--kubelet-arg=root-dir=${mountPoint}/kubelet"
+    "--kubelet-arg=root-dir=/var/lib/kubelet"
   ];
 
   services.cloud-init.settings = lib.mkMerge [
