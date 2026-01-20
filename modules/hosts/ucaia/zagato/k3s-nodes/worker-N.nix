@@ -6,10 +6,13 @@
   pkgs,
   pkgs-unstable,
   ...
-}:
+}: 
 let
   fsLabel    = "containerd";
-  mountPoint = "/var/lib/rancher/k3s/agent/containerd";
+  # Mount the whole k3s agent tree on the dedicated disk so kubelet emptyDir
+  # and containerd content share the larger volume instead of the root disk.
+  mountPoint = "/var/lib/rancher/k3s/agent";
+  mountUnit  = "var-lib-rancher-k3s-agent.mount";
   diskId     = "scsi-0QEMU_QEMU_HARDDISK_CONTAINERD01";
   diskById   = "/dev/disk/by-id/${diskId}";
   devUnit    = "dev-disk-by\\x2did-${lib.replaceStrings ["-"] ["\\x2d"] diskId}.device";
@@ -17,6 +20,18 @@ in {
   imports = [
     ../default.nix
   ];
+
+  # Customize the iPXE script to force DHCP and HTTP fetches from Aspen
+  system.build.netbootIpxeScript = lib.mkForce (pkgs.writeTextDir "netboot.ipxe" ''
+    #!ipxe
+    # Use the cmdline variable to allow the user to specify custom kernel params
+    # when chainloading this script from other iPXE scripts like netboot.xyz
+    dhcp
+    set base-url http://10.0.20.2
+    kernel ${"$"}{base-url}/bzImage init=${config.system.build.toplevel}/init initrd=${"$"}{base-url}/initrd ${toString config.boot.kernelParams} ''${cmdline}
+    initrd ${"$"}{base-url}/initrd
+    boot
+  '');
 
   # Cloud init and proxmox integration
   networking.useNetworkd = true;
@@ -63,7 +78,10 @@ in {
     };
   };
 
-  systemd.tmpfiles.rules = [ "d ${mountPoint} 0755 root root -" ];
+  systemd.tmpfiles.rules = [
+    "d ${mountPoint} 0755 root root -"
+    "d ${mountPoint}/kubelet 0755 root root -"
+  ];
 
   systemd.services.mkfs-containerd = {
     description = "Format containerd disk (ephemeral)";
@@ -98,8 +116,8 @@ in {
   systemd.services.wait-containerd-mount = {
     description = "Wait for containerd mount if disk present";
     wantedBy = [ "multi-user.target" ];
-    wants = [ "var-lib-rancher-k3s-agent-containerd.mount" ];
-    after = [ "var-lib-rancher-k3s-agent-containerd.mount" ];
+    wants = [ mountUnit ];
+    after = [ mountUnit ];
     serviceConfig = { 
       Type = "oneshot"; 
       RemainAfterExit = true;
@@ -127,6 +145,11 @@ in {
 
   systemd.services.k3s.wants = [ "wait-containerd-mount.service" ];
   systemd.services.k3s.after = [ "wait-containerd-mount.service" ];
+
+  # Put kubelet state on the containerd disk (off tmpfs root)
+  services.k3s.extraFlags = [
+    "--kubelet-arg=root-dir=${mountPoint}/kubelet"
+  ];
 
   services.cloud-init.settings = lib.mkMerge [
     # You can override or extend any of the structured settings here.

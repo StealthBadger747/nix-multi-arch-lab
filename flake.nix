@@ -33,9 +33,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     flake-utils.url = "github:numtide/flake-utils";
-    headplane = {
-      url = "github:tale/headplane/next";
-      inputs.nixpkgs.follows = "nixpkgs";
+    nixpkgs-headplane = {
+      url = "github:igor-ramazanov/nixpkgs/headplane-0.5.10";
     };
     ycotd-python-queue = {
       url = "git+ssh://git@github.com/StealthBadger747/ycotd-python-queue";
@@ -47,8 +46,8 @@
     };
   };
 
-  outputs = { self, nixpkgs, nixpkgs-unstable, sops-nix, authentik-nix
-    , srvos, deploy-rs, vulnix, flake-utils, headplane, ycotd-python-queue, nixarr }:
+  outputs = inputs@{ self, nixpkgs, nixpkgs-unstable, sops-nix, authentik-nix
+    , srvos, deploy-rs, vulnix, flake-utils, nixpkgs-headplane, ycotd-python-queue, nixarr }:
     let
       # Systems we want to support
       supportedSystems = [ "x86_64-linux" "aarch64-linux" ];
@@ -341,24 +340,66 @@
           };
         };
 
-        # Headscale system
-        oci-headscale = nixpkgs.lib.nixosSystem {
+        # Headscale system (uses nixpkgs-headplane branch with headplane upstreamed)
+        oci-headscale = nixpkgs-headplane.lib.nixosSystem {
           system = "x86_64-linux";
           modules = [
-            "${nixpkgs}/nixos/modules/virtualisation/oci-image.nix"
+            "${nixpkgs-headplane}/nixos/modules/virtualisation/oci-image.nix"
             ./modules/configs/common.nix
             ./modules/hosts/oracle-cloud/free-x86.nix
             sops-nix.nixosModules.sops
-            headplane.nixosModules.headplane
           ];
           specialArgs = { 
             pkgs-unstable = mkPkgsUnstable "x86_64-linux";
-            inherit headplane;
           };
-          pkgs = import nixpkgs {
+          pkgs = import nixpkgs-headplane {
             system = "x86_64-linux";
-            config.allowUnfree = true;
-            overlays = [ headplane.overlays.default ];
+            config = {
+              allowUnfree = true;
+              allowUnsupportedSystem = true;
+            };
+            overlays = [
+              # Provide the platform aliases expected by headplane packages
+              (final: prev: let
+                mk = prev.lib.systems.elaborate;
+              in {
+                lib = prev.lib // {
+                  systems = (prev.lib.systems or {}) // {
+                    aarch64-darwin = mk "aarch64-darwin";
+                    aarch64-linux = mk "aarch64-linux";
+                    x86_64-linux = mk "x86_64-linux";
+                    x86_64-darwin = mk "x86_64-darwin";
+                    i686-linux = mk "i686-linux";
+                  };
+                };
+                # Allow building headplane bits on this host and refresh the pnpm deps hash
+                headplane = prev.headplane.overrideAttrs (old: {
+                  pnpmDeps = old.pnpmDeps.overrideAttrs (_: {
+                    outputHashAlgo = "sha256";
+                    outputHash = "sha256-KyUcaR2Lvu5kT8arr4ZO8rCa5HWXTqmk8C7P8WoYK+c=";
+                  });
+                  meta = (old.meta or {}) // {
+                    platforms = [ prev.stdenv.hostPlatform ];
+                    badPlatforms = [ ];
+                    broken = false;
+                  };
+                });
+                headplane-ssh-wasm = prev.headplane-ssh-wasm.overrideAttrs (old: {
+                  meta = (old.meta or {}) // {
+                    platforms = [ prev.stdenv.hostPlatform ];
+                    badPlatforms = [ ];
+                    broken = false;
+                  };
+                });
+                hp_agent = prev.hp_agent.overrideAttrs (old: {
+                  meta = (old.meta or {}) // {
+                    platforms = [ prev.stdenv.hostPlatform ];
+                    badPlatforms = [ ];
+                    broken = false;
+                  };
+                });
+              })
+            ];
           };
         };
 
@@ -403,7 +444,10 @@
             ./modules/hosts/ucaia/aspen/default.nix
             sops-nix.nixosModules.sops
           ];
-          specialArgs = { pkgs-unstable = mkPkgsUnstable "x86_64-linux"; };
+          specialArgs = { 
+            pkgs-unstable = mkPkgsUnstable "x86_64-linux"; 
+            inherit self inputs;
+          };
         };
 
         # K3s Cluster Node 1 (Master)
@@ -487,7 +531,10 @@
               self.nixosConfigurations.oci-authentik;
             magicRollback = true;
             remoteBuild = true;
-            sshOpts = [ "-o" "StrictHostKeyChecking=no" ];
+            sshOpts = [
+              "-o" "StrictHostKeyChecking=no"
+              "-o" "UserKnownHostsFile=/dev/null"
+            ];
           };
         };
 
@@ -499,6 +546,10 @@
             path = deploy-rs.lib."x86_64-linux".activate.nixos
               self.nixosConfigurations.oci-headscale;
             magicRollback = true;
+            sshOpts = [
+              "-o" "StrictHostKeyChecking=no"
+              "-o" "UserKnownHostsFile=/dev/null"
+            ];
           };
         };
 
@@ -510,6 +561,10 @@
             path = deploy-rs.lib."x86_64-linux".activate.nixos
               self.nixosConfigurations.pc24-proxmox;
             magicRollback = true;
+            sshOpts = [
+              "-o" "StrictHostKeyChecking=no"
+              "-o" "UserKnownHostsFile=/dev/null"
+            ];
           };
         };
 
@@ -521,7 +576,10 @@
             path = deploy-rs.lib."x86_64-linux".activate.nixos
               self.nixosConfigurations.bugatti-proxmox-nix;
             magicRollback = true;
-            # remoteBuild = true;
+            sshOpts = [
+              "-o" "StrictHostKeyChecking=no"
+              "-o" "UserKnownHostsFile=/dev/null"
+            ];
           };
         };
 
@@ -533,6 +591,10 @@
             path = deploy-rs.lib."x86_64-linux".activate.nixos
               self.nixosConfigurations.giulia-proxmox;
             magicRollback = true;
+            sshOpts = [
+              "-o" "StrictHostKeyChecking=no"
+              "-o" "UserKnownHostsFile=/dev/null"
+            ];
           };
         };
 
@@ -544,6 +606,10 @@
             path = deploy-rs.lib."x86_64-linux".activate.nixos
               self.nixosConfigurations.aspen-proxmox;
             magicRollback = true;
+            sshOpts = [
+              "-o" "StrictHostKeyChecking=no"
+              "-o" "UserKnownHostsFile=/dev/null"
+            ];
           };
         };
 
@@ -555,6 +621,10 @@
             path = deploy-rs.lib."x86_64-linux".activate.nixos
               self.nixosConfigurations.k3s-master-1;
             magicRollback = true;
+            sshOpts = [
+              "-o" "StrictHostKeyChecking=no"
+              "-o" "UserKnownHostsFile=/dev/null"
+            ];
           };
         };
 
@@ -566,6 +636,10 @@
             path = deploy-rs.lib."x86_64-linux".activate.nixos
               self.nixosConfigurations.k3s-master-2;
             magicRollback = true;
+            sshOpts = [
+              "-o" "StrictHostKeyChecking=no"
+              "-o" "UserKnownHostsFile=/dev/null"
+            ];
           };
         };
 
@@ -577,31 +651,43 @@
             path = deploy-rs.lib."x86_64-linux".activate.nixos
               self.nixosConfigurations.k3s-master-3;
             magicRollback = true;
+            sshOpts = [
+              "-o" "StrictHostKeyChecking=no"
+              "-o" "UserKnownHostsFile=/dev/null"
+            ];
           };
         };
 
-        zagato-worker-01 = {
-          # hostname = "10.0.20.14";
-          hostname = "10.0.4.214";
-          sshUser = "erikp";
-          profiles.system = {
-            user = "root";
-            path = deploy-rs.lib."x86_64-linux".activate.nixos
-              self.nixosConfigurations.k3s-worker-1;
-            magicRollback = false;
-          };
-        };
+        # zagato-worker-01 = {
+        #   # hostname = "10.0.20.14";
+        #   hostname = "10.0.4.214";
+        #   sshUser = "erikp";
+        #   profiles.system = {
+        #     user = "root";
+        #     path = deploy-rs.lib."x86_64-linux".activate.nixos
+        #       self.nixosConfigurations.k3s-worker-1;
+        #     magicRollback = false;
+        #     sshOpts = [
+        #       "-o" "StrictHostKeyChecking=no"
+        #       "-o" "UserKnownHostsFile=/dev/null"
+        #     ];
+        #   };
+        # };
 
-        zagato-worker-02 = {
-          hostname = "10.0.20.15";
-          sshUser = "erikp";
-          profiles.system = {
-            user = "root";
-            path = deploy-rs.lib."x86_64-linux".activate.nixos
-              self.nixosConfigurations.k3s-worker-2;
-            magicRollback = false;
-          };
-        };
+        # zagato-worker-02 = {
+        #   hostname = "10.0.20.15";
+        #   sshUser = "erikp";
+        #   profiles.system = {
+        #     user = "root";
+        #     path = deploy-rs.lib."x86_64-linux".activate.nixos
+        #       self.nixosConfigurations.k3s-worker-2;
+        #     magicRollback = false;
+        #     sshOpts = [
+        #       "-o" "StrictHostKeyChecking=no"
+        #       "-o" "UserKnownHostsFile=/dev/null"
+        #     ];
+        #   };
+        # };
       };
 
       # Deployment checks

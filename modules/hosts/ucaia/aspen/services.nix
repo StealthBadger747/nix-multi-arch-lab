@@ -1,12 +1,14 @@
 {
   inputs,
-  outputs,
+  self,
   lib,
   config,
   pkgs,
   pkgs-unstable,
   ...
-}: {
+}: let
+  netboot = self.packages.${pkgs.system}.k3s-worker-N-netboot-files;
+in {
   services = {
     dnsmasq = {
       enable = true;
@@ -50,17 +52,6 @@
       };
     };
 
-    pixiecore = {
-      enable       = true;
-      openFirewall = true;
-      mode         = "boot";
-      dhcpNoBind   = true;
-      kernel       = "/srv/tftp/bzImage";
-      initrd       = "/srv/tftp/initrd";
-      cmdLine      = "init=/init console=ttyS0,115200 netboot=true";
-      debug        = true;
-    };
-
     nginx = {
       enable = true;
       virtualHosts."10.0.20.2" = {
@@ -70,11 +61,15 @@
     };
   };
 
-  # Ensure TFTP directory exists and has proper permissions
+  # Ensure TFTP directory exists, pull in netboot files, and set permissions
   system.activationScripts.tftp-setup = ''
+    set -e
     mkdir -p /srv/tftp
     chmod 755 /srv/tftp
-    chown -R dnsmasq:dnsmasq /srv/tftp
+    install -m644 ${netboot}/bzImage /srv/tftp/bzImage
+    install -m644 ${netboot}/initrd /srv/tftp/initrd
+    install -m644 ${netboot}/netboot.ipxe /srv/tftp/boot.ipxe
+    chown dnsmasq:dnsmasq /srv/tftp /srv/tftp/bzImage /srv/tftp/initrd /srv/tftp/boot.ipxe
   '';
 
   # Open firewall ports for TFTP and DHCP
