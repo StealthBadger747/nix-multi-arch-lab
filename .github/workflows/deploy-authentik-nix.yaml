@@ -13,14 +13,14 @@ jobs:
       max-parallel: 3
       matrix:
         include:
-          # - node: oci-authentik
-          #   hostname: 150.136.213.118
-          #   sshUser: erikp
-          #   remote: true
-          # - node: oci-headscale
-          #   hostname: 129.153.154.190
-          #   sshUser: erikp
-          #   remote: false
+          - node: oci-authentik
+            hostname: 150.136.213.118
+            sshUser: erikp
+            remote: true
+          - node: oci-headscale
+            hostname: 129.153.154.190
+            sshUser: erikp
+            remote: false
           # - node: pc24-proxmox
           #   hostname: 100.64.0.46
           #   sshUser: erikp
@@ -41,14 +41,14 @@ jobs:
             hostname: 10.0.20.11
             sshUser: erikp
             remote: false
-          # - node: zagato-master-02
-          #   hostname: 10.0.20.12
-          #   sshUser: erikp
-          #   remote: false
-          # - node: zagato-master-03
-          #   hostname: 10.0.20.13
-          #   sshUser: erikp
-          #   remote: false
+          - node: zagato-master-02
+            hostname: 10.0.20.12
+            sshUser: erikp
+            remote: false
+          - node: zagato-master-03
+            hostname: 10.0.20.13
+            sshUser: erikp
+            remote: false
     permissions:
       contents: read
       id-token: write
