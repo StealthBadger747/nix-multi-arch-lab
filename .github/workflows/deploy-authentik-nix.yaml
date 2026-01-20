@@ -1,9 +1,12 @@
 name: Build & Deploy
 
 on:
-  # pull_request:
-  push:
-    # branches: [master]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Branch, tag or SHA to deploy'
+        required: true
+        default: 'master'
 
 jobs:
   deploy:
@@ -64,6 +67,8 @@ jobs:
     
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
 
       - name: Install dependencies
         run: sudo apt-get update && sudo apt-get install -y xz-utils
