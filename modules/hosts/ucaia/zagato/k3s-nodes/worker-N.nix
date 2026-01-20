@@ -81,6 +81,7 @@ in {
   systemd.tmpfiles.rules = [
     "d ${mountPoint} 0755 root root -"
     "d ${mountPoint}/kubelet 0755 root root -"
+    "d /var/lib/kubelet 0755 root root -"
   ];
 
   systemd.services.mkfs-containerd = {
@@ -112,6 +113,18 @@ in {
       unitConfig.JobTimeoutSec = "20s";
     }
   ];
+
+  fileSystems."/var/lib/kubelet" = {
+    device = "${mountPoint}/kubelet";
+    fsType = "none";
+    options = [
+      "bind"
+      "nofail"
+      "x-systemd.after=${mountUnit}"
+      "x-systemd.requires-mounts-for=${mountPoint}"
+      "x-systemd.mount-timeout=20s"
+    ];
+  };
 
   systemd.services.wait-containerd-mount = {
     description = "Wait for containerd mount if disk present";
