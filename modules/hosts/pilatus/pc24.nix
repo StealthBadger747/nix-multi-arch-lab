@@ -14,6 +14,9 @@ in {
     ../../overlays/nixarr/overseerr.nix
   ];
 
+  virtualisation.podman.enable = true;
+  virtualisation.oci-containers.backend = "podman";
+
   environment.systemPackages = (with pkgs; [
       attic-client
       pipx
@@ -125,6 +128,31 @@ in {
 
   };
 
+  systemd.tmpfiles.rules = [
+    "d /BIGBOY/proxmox-backups 0750 root root -"
+    "d /BIGBOY/pbs 0750 root root -"
+    "d /BIGBOY/pbs/etc 0750 root root -"
+    "d /BIGBOY/pbs/logs 0750 root root -"
+    "d /BIGBOY/pbs/lib 0750 root root -"
+  ];
+
+  virtualisation.oci-containers.containers.pbs = {
+    image = "docker.io/ayufan/proxmox-backup-server:latest";
+    autoStart = true;
+    ports = [
+      "8007:8007/tcp"
+    ];
+    environment = {
+      TZ = timezone;
+    };
+    volumes = [
+      "/BIGBOY/proxmox-backups:/backups"
+      "/BIGBOY/pbs/etc:/etc/proxmox-backup"
+      "/BIGBOY/pbs/logs:/var/log/proxmox-backup"
+      "/BIGBOY/pbs/lib:/var/lib/proxmox-backup"
+    ];
+  };
+
   
 
   nixarr = {
@@ -189,7 +217,7 @@ in {
     nameservers = [ "1.1.1.1" "8.8.4.4" "8.8.8.8" "9.9.9.9" ];
     firewall = {
       enable = true;
-      allowedTCPPorts = [ 22 80 443 ];
+      allowedTCPPorts = [ 22 80 443 8007 ];
     };
   };
 

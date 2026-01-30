@@ -376,7 +376,7 @@
                 headplane = prev.headplane.overrideAttrs (old: {
                   pnpmDeps = old.pnpmDeps.overrideAttrs (_: {
                     outputHashAlgo = "sha256";
-                    outputHash = "sha256-KyUcaR2Lvu5kT8arr4ZO8rCa5HWXTqmk8C7P8WoYK+c=";
+                    outputHash = "sha256-AYfEL3HSRg87I+Y0fkLthFSDWgHTg5u0DBpzn6KBn1Q=";
                   });
                   meta = (old.meta or {}) // {
                     platforms = [ prev.stdenv.hostPlatform ];
