@@ -10,12 +10,10 @@ in {
   imports = [
     ./pc24/zfs.nix
     ./pc24/nfs.nix
+    ./palworld.nix
     # ../../overlays/nixarr/qbittorrent.nix
     ../../overlays/nixarr/overseerr.nix
   ];
-
-  virtualisation.podman.enable = true;
-  virtualisation.oci-containers.backend = "podman";
 
   environment.systemPackages = (with pkgs; [
       attic-client
@@ -42,6 +40,18 @@ in {
         restartUnits = [ "inadyn.service" ];
       };
       airvpn-san-jose-imai-conf = {
+        sopsFile = ../../../secrets/hosts/pilatus/pc24.yaml;
+        owner = "root";
+        group = "root";
+        mode = "0400";
+      };
+      palworld-admin-password = {
+        sopsFile = ../../../secrets/hosts/pilatus/pc24.yaml;
+        owner = "root";
+        group = "root";
+        mode = "0400";
+      };
+      palworld-server-password = {
         sopsFile = ../../../secrets/hosts/pilatus/pc24.yaml;
         owner = "root";
         group = "root";
