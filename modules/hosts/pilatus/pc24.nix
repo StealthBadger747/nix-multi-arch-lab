@@ -5,7 +5,6 @@ let
   fqdn = "${host}.${tld}";
   timezone = "America/Los_Angeles";
 in {
-  nixpkgs.config.allowUnfree = true;
 
   imports = [
     ./pc24/zfs.nix

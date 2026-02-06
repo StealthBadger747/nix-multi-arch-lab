@@ -7,7 +7,7 @@
   pkgs-unstable,
   ...
 }: let
-  netboot = self.packages.${pkgs.system}.k3s-worker-N-netboot-files;
+  netboot = self.packages.${pkgs.stdenv.hostPlatform.system}.k3s-worker-N-netboot-files;
 in {
   services = {
     dnsmasq = {
