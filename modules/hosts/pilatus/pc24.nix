@@ -19,7 +19,27 @@ in {
 
   environment.systemPackages = (with pkgs; [
       attic-client
+      bat
+      curl
+      dnsutils
+      eza
+      fd
+      fzf
+      git-lfs
+      httpie
+      jq
+      just
+      lsof
+      nmap
+      ripgrep
+      rsync
+      strace
+      tcpdump
+      unzip
       pipx
+      yq-go
+      zoxide
+      zip
     ]) ++ 
     ( with pkgs-unstable; [
       claude-code
