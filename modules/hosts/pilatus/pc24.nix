@@ -220,11 +220,19 @@ in {
       openFirewall = true;
     };
     jellyfin = {
-      enable = true;
+      enable = false;
       package = pkgs-unstable.jellyfin;
       stateDir = "/APPS/jellyfin";
       openFirewall = true;
     };
+  };
+
+  systemd.services.qbittorrent.serviceConfig = {
+    # Keep torrent traffic from starving Plex/media workloads.
+    Nice = 19;
+    IOSchedulingClass = "idle";
+    CPUWeight = 10;
+    IOWeight = 10;
   };
 
   networking = {
