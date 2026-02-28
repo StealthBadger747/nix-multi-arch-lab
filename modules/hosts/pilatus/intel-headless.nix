@@ -48,5 +48,4 @@
 
   users.users.erikp.extraGroups = [ "video" "render" ];
 
-  nixpkgs.config.allowUnfree = true;
 }
