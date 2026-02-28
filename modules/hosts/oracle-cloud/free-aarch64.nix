@@ -206,6 +206,48 @@ in {
       environmentFile = config.sops.secrets.ycotd-email.path;
     };
   };
+
+  systemd.services.nginx = {
+    # Ensure ACME certificate jobs run before nginx start/restart during activation.
+    wants = [
+      "acme-${authentik_fqdn}.service"
+      "acme-${foundry_fqdn}.service"
+    ];
+    after = [
+      "acme-${authentik_fqdn}.service"
+      "acme-${foundry_fqdn}.service"
+    ];
+    # Guard against transient cert/key races while ACME files are being refreshed.
+    preStart = lib.mkBefore ''
+      check_pair() {
+        cert="$1"
+        key="$2"
+        cert_pub="$(${pkgs.openssl}/bin/openssl x509 -in "$cert" -pubkey -noout 2>/dev/null | ${pkgs.openssl}/bin/openssl pkey -pubin -outform der 2>/dev/null | ${pkgs.coreutils}/bin/sha256sum | ${pkgs.gawk}/bin/awk "{print \\$1}" || true)"
+        key_pub="$(${pkgs.openssl}/bin/openssl pkey -in "$key" -pubout -outform der 2>/dev/null | ${pkgs.coreutils}/bin/sha256sum | ${pkgs.gawk}/bin/awk "{print \\$1}" || true)"
+        [ -n "$cert_pub" ] && [ "$cert_pub" = "$key_pub" ]
+      }
+
+      for domain in "${authentik_fqdn}" "${foundry_fqdn}"; do
+        cert="/var/lib/acme/$domain/fullchain.pem"
+        key="/var/lib/acme/$domain/key.pem"
+        if [ -e "$cert" ] && [ -e "$key" ]; then
+          ok=0
+          for _ in $(seq 1 30); do
+            if check_pair "$cert" "$key"; then
+              ok=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "$ok" -ne 1 ]; then
+            echo "nginx-pre-start: ACME cert/key mismatch for $domain" >&2
+            exit 1
+          fi
+        fi
+      done
+    '';
+  };
+
   users.users.authentik = {
     isSystemUser = true;
     group = "authentik";
@@ -236,7 +278,7 @@ in {
   virtualisation.oci-containers.backend = "podman";
   virtualisation.oci-containers.containers = {
     foundryvtt = {
-      image = "docker.io/felddy/foundryvtt@sha256:1bfeaf21c2cfd5f8657c2e559901a729e2b0a5368fbf425b1d7a865dd1b7e816";
+      image = "docker.io/felddy/foundryvtt@sha256:41d518782f2fabbec887413c56da8ef8175c22fb5a75fde45382661443a8ae6b";
       autoStart = true;
       ports = [ "127.0.0.1:${toString foundry_port}:30000" ];
       environmentFiles = [ config.sops.secrets.foundryvtt.path ];
