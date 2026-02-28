@@ -32,6 +32,15 @@
     nixpkgs-aspen-proxmox.url = "github:NixOS/nixpkgs/nixos-25.11";
     nixpkgs-zagato.url = "github:NixOS/nixpkgs/nixos-25.11";
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs-unstable-oci-aarch64-base.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs-unstable-proxmox-base.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs-unstable-pc24-proxmox.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs-unstable-oci-authentik.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs-unstable-oci-headscale.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs-unstable-bugatti-proxmox-nix.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs-unstable-zagato.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs-unstable-giulia-proxmox.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs-unstable-aspen-proxmox.url = "github:nixos/nixpkgs/nixos-unstable";
     sops-nix.url = "github:Mic92/sops-nix";
     authentik-nix.url = "github:nix-community/authentik-nix";
     srvos.url = "github:nix-community/srvos";
