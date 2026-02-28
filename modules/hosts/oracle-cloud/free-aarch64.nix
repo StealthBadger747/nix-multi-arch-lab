@@ -248,6 +248,67 @@ in {
     '';
   };
 
+  systemd.services.foundry-backup = {
+    description = "Backup FoundryVTT data locally";
+    path = [ pkgs.coreutils pkgs.openssl pkgs.restic pkgs.systemd ];
+    serviceConfig = {
+      Type = "oneshot";
+      User = "root";
+      Group = "root";
+      UMask = "0077";
+    };
+    script = ''
+      set -euo pipefail
+
+      backup_root="/var/backups/foundryvtt"
+      restic_repo="$backup_root/restic-repo"
+      restic_password_file="$backup_root/restic-password"
+      foundry_unit="podman-foundryvtt.service"
+
+      mkdir -p "$backup_root"
+      chmod 700 "$backup_root"
+
+      if [ ! -s "$restic_password_file" ]; then
+        openssl rand -base64 48 > "$restic_password_file"
+        chmod 600 "$restic_password_file"
+      fi
+
+      export RESTIC_REPOSITORY="$restic_repo"
+      export RESTIC_PASSWORD_FILE="$restic_password_file"
+
+      if [ ! -d "$restic_repo" ]; then
+        restic init
+      fi
+
+      restart_foundry=0
+      if systemctl is-active --quiet "$foundry_unit"; then
+        restart_foundry=1
+        systemctl stop "$foundry_unit"
+      fi
+
+      cleanup() {
+        if [ "$restart_foundry" -eq 1 ]; then
+          systemctl start "$foundry_unit"
+        fi
+      }
+      trap cleanup EXIT
+
+      restic backup /var/lib/foundryvtt --tag foundryvtt --verbose
+      restic forget --prune --keep-daily 3 --keep-weekly 2
+    '';
+  };
+
+  systemd.timers.foundry-backup = {
+    description = "Run FoundryVTT backup at 06:30 America/Los_Angeles";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnCalendar = "*-*-* 06:30:00 America/Los_Angeles";
+      Persistent = true;
+      RandomizedDelaySec = "0";
+      Unit = "foundry-backup.service";
+    };
+  };
+
   users.users.authentik = {
     isSystemUser = true;
     group = "authentik";
