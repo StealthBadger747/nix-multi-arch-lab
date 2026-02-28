@@ -256,6 +256,7 @@ in {
       User = "root";
       Group = "root";
       UMask = "0077";
+      OnFailure = [ "foundry-backup-alert.service" ];
     };
     script = ''
       set -euo pipefail
@@ -295,6 +296,62 @@ in {
 
       restic backup /var/lib/foundryvtt --tag foundryvtt --verbose
       restic forget --prune --keep-daily 3 --keep-weekly 2
+    '';
+  };
+
+  systemd.services.foundry-backup-alert = {
+    description = "Alert when Foundry backup fails";
+    path = [ pkgs.coreutils pkgs.python3 pkgs.systemd ];
+    serviceConfig = {
+      Type = "oneshot";
+      User = "root";
+      Group = "root";
+      UMask = "0077";
+      EnvironmentFile = config.sops.secrets.ycotd-email.path;
+    };
+    script = ''
+      set -euo pipefail
+
+      unit="foundry-backup.service"
+      host="$(${pkgs.coreutils}/bin/hostname)"
+      ts="$(${pkgs.coreutils}/bin/date -u +%Y-%m-%dT%H:%M:%SZ)"
+      to="''${ALERT_EMAIL_TO:-parawell.erik@gmail.com}"
+      message="ALERT: $unit failed on $host at $ts"
+      export unit host ts message ALERT_EMAIL_TO="$to"
+
+      echo "$message" | ${pkgs.systemd}/bin/systemd-cat -t foundry-backup-alert -p err
+      echo "$message" >> /var/log/foundry-backup-alert.log
+
+      ${pkgs.python3}/bin/python3 - <<'PY'
+import os
+import smtplib
+from email.message import EmailMessage
+
+host = os.environ["SMTP_HOST"]
+port = int(os.environ["SMTP_PORT"])
+user = os.environ["SMTP_USER"]
+password = os.environ["SMTP_PASS"]
+to = os.environ.get("ALERT_EMAIL_TO", "parawell.erik@gmail.com")
+message = os.environ["message"]
+unit = os.environ["unit"]
+hostname = os.environ["host"]
+ts = os.environ["ts"]
+
+msg = EmailMessage()
+msg["From"] = user
+msg["To"] = to
+msg["Subject"] = f"[ALERT] {unit} failed on {hostname}"
+msg.set_content(
+    f"{message}\n\n"
+    f"Unit: {unit}\n"
+    f"Host: {hostname}\n"
+    f"Timestamp (UTC): {ts}\n"
+)
+
+with smtplib.SMTP_SSL(host, port, timeout=30) as smtp:
+    smtp.login(user, password)
+    smtp.send_message(msg)
+PY
     '';
   };
 
