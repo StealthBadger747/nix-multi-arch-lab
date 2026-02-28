@@ -222,8 +222,8 @@ in {
       check_pair() {
         cert="$1"
         key="$2"
-        cert_pub="$(${pkgs.openssl}/bin/openssl x509 -in "$cert" -pubkey -noout 2>/dev/null | ${pkgs.openssl}/bin/openssl pkey -pubin -outform der 2>/dev/null | ${pkgs.coreutils}/bin/sha256sum | ${pkgs.gawk}/bin/awk "{print \\$1}" || true)"
-        key_pub="$(${pkgs.openssl}/bin/openssl pkey -in "$key" -pubout -outform der 2>/dev/null | ${pkgs.coreutils}/bin/sha256sum | ${pkgs.gawk}/bin/awk "{print \\$1}" || true)"
+        cert_pub="$(${pkgs.openssl}/bin/openssl x509 -in "$cert" -pubkey -noout 2>/dev/null | ${pkgs.openssl}/bin/openssl pkey -pubin -outform der 2>/dev/null | ${pkgs.coreutils}/bin/sha256sum | ${pkgs.coreutils}/bin/cut -d' ' -f1 || true)"
+        key_pub="$(${pkgs.openssl}/bin/openssl pkey -in "$key" -pubout -outform der 2>/dev/null | ${pkgs.coreutils}/bin/sha256sum | ${pkgs.coreutils}/bin/cut -d' ' -f1 || true)"
         [ -n "$cert_pub" ] && [ "$cert_pub" = "$key_pub" ]
       }
 
