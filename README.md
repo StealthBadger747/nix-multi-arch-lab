@@ -30,6 +30,8 @@ This repository features automated management of PXE boot assets. The `aspen` ho
 
 #### OCI Authentik Server (aarch64)
 - Runs Authentik identity management
+- Uses upstream `nix-community/authentik-nix` input (no custom Authentik fork)
+- Authentik version is pinned via `flake.lock` (`authentik-nix` / `authentik-src`)
 - Hosts FoundryVTT in Podman container
 - NGINX reverse proxy with SSL
 - Dynamic DNS updates via Inadyn
