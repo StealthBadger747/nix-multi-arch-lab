@@ -1,0 +1,56 @@
+name: Vulnerability Report
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Approx 6:00 AM Pacific when PST is active (UTC fixed schedule).
+    - cron: "0 14 * * 1,4"
+
+jobs:
+  vulnix-report:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      VULNIX_OUTPUT_DIR: ${{ runner.temp }}/vulnix-reports/${{ github.run_id }}-${{ github.run_attempt }}
+      VULNIX_SMTP_HOST: ${{ secrets.VULNIX_SMTP_HOST }}
+      VULNIX_SMTP_PORT: ${{ secrets.VULNIX_SMTP_PORT }}
+      VULNIX_SMTP_USER: ${{ secrets.VULNIX_SMTP_USER }}
+      VULNIX_SMTP_PASS: ${{ secrets.VULNIX_SMTP_PASS }}
+      VULNIX_SMTP_CONNECTION: ${{ secrets.VULNIX_SMTP_CONNECTION }}
+      VULNIX_EMAIL_TO: ${{ secrets.VULNIX_EMAIL_TO }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v30
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run vulnix host scans
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./scripts/vulnix-scan.sh
+
+      - name: Upload vulnix artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vulnix-report-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.VULNIX_OUTPUT_DIR }}
+          if-no-files-found: error
+
+      - name: Send vulnix email
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ ! -f "${VULNIX_OUTPUT_DIR}/summary.json" ]; then
+            echo "summary.json not found; skipping email"
+            exit 0
+          fi
+          python3 ./scripts/vulnix-email-report.py "${VULNIX_OUTPUT_DIR}/summary.json" "${VULNIX_OUTPUT_DIR}/summary.md"

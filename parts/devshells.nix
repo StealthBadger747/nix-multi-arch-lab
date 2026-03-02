@@ -12,6 +12,7 @@
           sops
           nano
           nh
+          python3
           bashInteractive
         ]) ++ (with pkgs-unstable; [
           inputs.deploy-rs.packages.${system}.default
@@ -23,6 +24,7 @@
           echo "Available image builders:"
           echo " - nix build .#oci-aarch64-image       # For Oracle Cloud (aarch64)"
           echo " - nix build .#proxmox-x86-linux-image # For Proxmox (x86_64)"
+          echo " - ./scripts/vulnix-scan.sh            # Per-host vulnerability summary"
 
           # Add the script to PATH
           export PATH="$PWD/scripts:$PATH"

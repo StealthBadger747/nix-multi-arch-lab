@@ -84,6 +84,37 @@ deploy .#oci-authentik
 # Add other hosts as needed
 ```
 
+## Vulnerability Reporting (vulnix)
+
+This repo includes a scheduled per-host `vulnix` report workflow:
+- Workflow: `.github/workflows/vulnix-report.yaml`
+- Trigger: twice weekly schedule + manual `workflow_dispatch`
+- Scope: auto-discovers all `nixosConfigurations` and scans each host separately
+- Output: per-host JSON reports + consolidated `summary.md` and `summary.json`
+- Delivery: email summary from `VULNIX_SMTP_USER` to `VULNIX_EMAIL_TO`
+
+### Run locally
+
+```bash
+nix develop
+./scripts/vulnix-scan.sh
+```
+
+Optional env vars:
+- `VULNIX_OUTPUT_DIR` (default: `reports/vulnix/<timestamp>`)
+- `VULNIX_CACHE_DIR` (default: `~/.cache/vulnix`)
+- `VULNIX_HOSTS` (optional comma-separated host names for targeted local scans)
+- `VULNIX_WHITELIST_URLS` (comma-separated list of whitelist file paths or URLs)
+
+### GitHub Secrets for email
+
+- `VULNIX_SMTP_HOST`
+- `VULNIX_SMTP_PORT`
+- `VULNIX_SMTP_USER`
+- `VULNIX_SMTP_PASS`
+- `VULNIX_SMTP_CONNECTION` (set to `SSL/TLS`)
+- `VULNIX_EMAIL_TO` (comma-separated recipient emails)
+
 ## Directory Structure
 
 ```
