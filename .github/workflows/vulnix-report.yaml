@@ -12,7 +12,7 @@ jobs:
     permissions:
       contents: read
     env:
-      VULNIX_OUTPUT_DIR: ${{ runner.temp }}/vulnix-reports/${{ github.run_id }}-${{ github.run_attempt }}
+      VULNIX_OUTPUT_DIR: /tmp/vulnix-reports/${{ github.run_id }}-${{ github.run_attempt }}
       VULNIX_SMTP_HOST: ${{ secrets.VULNIX_SMTP_HOST }}
       VULNIX_SMTP_PORT: ${{ secrets.VULNIX_SMTP_PORT }}
       VULNIX_SMTP_USER: ${{ secrets.VULNIX_SMTP_USER }}
