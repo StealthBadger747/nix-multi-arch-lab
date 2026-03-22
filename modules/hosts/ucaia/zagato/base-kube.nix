@@ -26,7 +26,7 @@
   systemd.sockets.iscsid.enable = false;
 
   networking = {
-    nameservers = ["10.0.4.12" "10.0.4.13" "1.1.1.1"];
+    nameservers = ["10.0.4.13" "1.1.1.1"];
     nftables.enable = true;
     firewall = {
       enable = true;
