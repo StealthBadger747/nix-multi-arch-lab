@@ -2,6 +2,7 @@
 {
   fileSystems."/export/share-stash" = {
     device = "/BIGBOY/JBOD/stash";
+    fsType = "none";
     options = [ "bind" ];
   };
 

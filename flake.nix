@@ -25,7 +25,7 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
     nixpkgs-oci-aarch64-base.url = "github:NixOS/nixpkgs/nixos-25.11";
     nixpkgs-proxmox-base.url = "github:NixOS/nixpkgs/nixos-25.11";
-    nixpkgs-pc24-proxmox.url = "github:NixOS/nixpkgs/nixos-25.11";
+    nixpkgs-pc24-proxmox.url = "github:NixOS/nixpkgs/nixos-26.05";
     nixpkgs-oci-authentik.url = "github:NixOS/nixpkgs/nixos-25.11";
     nixpkgs-bugatti-proxmox-nix.url = "github:NixOS/nixpkgs/nixos-25.11";
     nixpkgs-giulia-proxmox.url = "github:NixOS/nixpkgs/nixos-25.11";

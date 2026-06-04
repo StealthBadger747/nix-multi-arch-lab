@@ -109,6 +109,21 @@
       };
     };
 
+    k3s-master-1 = {
+      hostname = "10.0.20.11";
+      sshUser = "erikp";
+      profiles.system = {
+        user = "root";
+        path = inputs.deploy-rs.lib."x86_64-linux".activate.nixos
+          self.nixosConfigurations.k3s-master-1;
+        magicRollback = true;
+        sshOpts = [
+          "-o" "StrictHostKeyChecking=no"
+          "-o" "UserKnownHostsFile=/dev/null"
+        ];
+      };
+    };
+
     zagato-master-02 = {
       hostname = "10.0.20.12";
       sshUser = "erikp";
@@ -124,7 +139,37 @@
       };
     };
 
+    k3s-master-2 = {
+      hostname = "10.0.20.12";
+      sshUser = "erikp";
+      profiles.system = {
+        user = "root";
+        path = inputs.deploy-rs.lib."x86_64-linux".activate.nixos
+          self.nixosConfigurations.k3s-master-2;
+        magicRollback = true;
+        sshOpts = [
+          "-o" "StrictHostKeyChecking=no"
+          "-o" "UserKnownHostsFile=/dev/null"
+        ];
+      };
+    };
+
     zagato-master-03 = {
+      hostname = "10.0.20.13";
+      sshUser = "erikp";
+      profiles.system = {
+        user = "root";
+        path = inputs.deploy-rs.lib."x86_64-linux".activate.nixos
+          self.nixosConfigurations.k3s-master-3;
+        magicRollback = true;
+        sshOpts = [
+          "-o" "StrictHostKeyChecking=no"
+          "-o" "UserKnownHostsFile=/dev/null"
+        ];
+      };
+    };
+
+    k3s-master-3 = {
       hostname = "10.0.20.13";
       sshUser = "erikp";
       profiles.system = {

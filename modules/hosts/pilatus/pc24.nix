@@ -248,6 +248,8 @@ in {
   };
 
   systemd.services.qbittorrent.serviceConfig = {
+    # qBittorrent can exit cleanly, leaving systemd with no failed unit to restart.
+    Restart = lib.mkForce "always";
     # Keep torrent traffic from starving Plex/media workloads.
     Nice = 19;
     IOSchedulingClass = "idle";
