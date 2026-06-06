@@ -29,8 +29,8 @@
     nixpkgs-oci-authentik.url = "github:NixOS/nixpkgs/nixos-25.11";
     nixpkgs-bugatti-proxmox-nix.url = "github:NixOS/nixpkgs/nixos-25.11";
     nixpkgs-giulia-proxmox.url = "github:NixOS/nixpkgs/nixos-25.11";
-    nixpkgs-aspen-proxmox.url = "github:NixOS/nixpkgs/nixos-25.11";
-    nixpkgs-zagato.url = "github:NixOS/nixpkgs/nixos-25.11";
+    nixpkgs-aspen-proxmox.url = "github:NixOS/nixpkgs/nixos-26.05";
+    nixpkgs-zagato.url = "github:NixOS/nixpkgs/nixos-26.05";
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     nixpkgs-unstable-oci-aarch64-base.url = "github:nixos/nixpkgs/nixos-unstable";
     nixpkgs-unstable-proxmox-base.url = "github:nixos/nixpkgs/nixos-unstable";

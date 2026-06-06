@@ -25,6 +25,8 @@
   # Disabling the socket lets the service manage itself directly.
   systemd.sockets.iscsid.enable = false;
 
+  services.k3s.package = pkgs.k3s_1_35;
+
   networking = {
     nameservers = ["10.0.4.13" "1.1.1.1"];
     nftables.enable = true;

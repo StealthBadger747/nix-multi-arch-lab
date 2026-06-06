@@ -30,7 +30,7 @@
     nmap
     jq
     busybox
-    neofetch
+    fastfetch
   ];
 
   boot.tmp.cleanOnBoot = true;
