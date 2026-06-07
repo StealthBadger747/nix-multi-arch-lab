@@ -200,6 +200,7 @@ in {
       dd if=/dev/zero of="$SWAP_FILE" bs=1M count=$((SIZE_GIB * 1024)) status=progress
       chmod 600 "$SWAP_FILE"
       mkswap "$SWAP_FILE"
+      swapon "$SWAP_FILE" || true
     '';
   };
 
@@ -210,9 +211,9 @@ in {
   }];
 
   # Keep kubelet root-dir at /var/lib/kubelet so CSI staging paths match.
-  # Aggressive image GC because the dedicated containerd disk is only 16 GiB
+  # Aggressive image GC because the dedicated containerd disk is only 64 GiB
   # and can fill quickly with ML/CSI images; these thresholds keep imagefs
-  # below 75% and trigger cleanup as soon as it hits 80%.
+  # below 70% and trigger cleanup as soon as it hits 75%.
   services.k3s.extraFlags = [
     "--kubelet-arg=root-dir=/var/lib/kubelet"
     "--kubelet-arg=image-gc-low-threshold=70"
