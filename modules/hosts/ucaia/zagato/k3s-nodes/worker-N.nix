@@ -162,9 +162,26 @@ in {
   systemd.services.k3s.after = [ "wait-containerd-mount.service" ];
 
   # Keep kubelet root-dir at /var/lib/kubelet so CSI staging paths match.
+  # Aggressive image GC because the dedicated containerd disk is only 16 GiB
+  # and can fill quickly with ML/CSI images; these thresholds keep imagefs
+  # below 75% and trigger cleanup as soon as it hits 80%.
   services.k3s.extraFlags = [
     "--kubelet-arg=root-dir=/var/lib/kubelet"
+    "--kubelet-arg=image-gc-low-threshold=70"
+    "--kubelet-arg=image-gc-high-threshold=75"
+    "--kubelet-arg=eviction-hard=imagefs.available<5%,nodefs.available<5%,memory.available<100Mi"
+    "--kubelet-arg=eviction-soft=imagefs.available<10%,nodefs.available<10%,memory.available<200Mi"
+    "--kubelet-arg=eviction-soft-grace-period=imagefs.available=1m,nodefs.available=1m,memory.available=1m"
+    "--kubelet-arg=container-log-max-size=10Mi"
+    "--kubelet-arg=container-log-max-files=2"
   ];
+
+  # Limit journald on tmpfs-based netboot workers so logs do not exhaust RAM.
+  services.journald.extraConfig = ''
+    SystemMaxUse=200M
+    MaxFileSec=3day
+    MaxRetentionSec=7day
+  '';
 
   services.cloud-init.settings = lib.mkMerge [
     # You can override or extend any of the structured settings here.
