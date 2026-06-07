@@ -27,6 +27,13 @@
 
   services.k3s.package = pkgs.k3s_1_36;
 
+  # Limit journald disk usage to prevent root disk fill-up on 30GB master nodes.
+  services.journald.extraConfig = ''
+    SystemMaxUse=500M
+    MaxFileSec=7day
+    MaxRetentionSec=30day
+  '';
+
   networking = {
     nameservers = ["10.0.4.13" "1.1.1.1"];
     nftables.enable = true;
@@ -39,6 +46,7 @@
         6443    # Kubernetes API server
         2379    # etcd client API
         2380    # etcd peer API
+        9100    # Prometheus node-exporter
         10250   # Kubelet API
         # Longhorn ports
         9500    # Longhorn Manager
