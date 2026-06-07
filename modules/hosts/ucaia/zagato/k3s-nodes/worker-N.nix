@@ -161,6 +161,54 @@ in {
   systemd.services.k3s.wants = [ "wait-containerd-mount.service" ];
   systemd.services.k3s.after = [ "wait-containerd-mount.service" ];
 
+  # Create a 2 GiB swap file on the persistent containerd disk. The worker runs
+  # with tmpfs root and no swap by default, which causes OOM kills when pods
+  # burst memory (e.g., immich machine-learning, ceph-csi). The containerd disk
+  # is the only persistent writable space available, so we place the swap file
+  # there. It is recreated only if missing or the wrong size.
+  systemd.services.create-containerd-swap = {
+    description = "Create swap file on containerd disk";
+    wantedBy = [ "swap.target" "multi-user.target" ];
+    after = [ mountUnit "wait-containerd-mount.service" ];
+    requires = [ "wait-containerd-mount.service" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+    path = [ pkgs.util-linux pkgs.coreutils ];
+    script = ''
+      set -euo pipefail
+      SWAP_FILE="${mountPoint}/swapfile"
+      SIZE_GIB=2
+      SIZE_BYTES=$((SIZE_GIB * 1024 * 1024 * 1024))
+
+      if [ ! -b '${diskById}' ]; then
+        echo "No containerd disk present; skipping swap file creation"
+        exit 0
+      fi
+
+      if [ -f "$SWAP_FILE" ]; then
+        CURRENT_SIZE=$(stat -c %s "$SWAP_FILE" 2>/dev/null || echo 0)
+        if [ "$CURRENT_SIZE" -eq "$SIZE_BYTES" ]; then
+          echo "Swap file already exists with correct size"
+          exit 0
+        fi
+        rm -f "$SWAP_FILE"
+      fi
+
+      mkdir -p "$(dirname "$SWAP_FILE")"
+      dd if=/dev/zero of="$SWAP_FILE" bs=1M count=$((SIZE_GIB * 1024)) status=progress
+      chmod 600 "$SWAP_FILE"
+      mkswap "$SWAP_FILE"
+    '';
+  };
+
+  swapDevices = [{
+    device = "${mountPoint}/swapfile";
+    priority = 10;
+    options = [ "nofail" ];
+  }];
+
   # Keep kubelet root-dir at /var/lib/kubelet so CSI staging paths match.
   # Aggressive image GC because the dedicated containerd disk is only 16 GiB
   # and can fill quickly with ML/CSI images; these thresholds keep imagefs
