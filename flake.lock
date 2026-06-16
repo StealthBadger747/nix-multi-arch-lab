@@ -947,11 +947,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1781337857,
-        "narHash": "sha256-Nqltvf+fiFeZi+qTEbw6U1F4KKuykXjADbDDNcXUL/g=",
+        "lastModified": 1781624611,
+        "narHash": "sha256-i68U91gEjkGCmrxmkikKwOAcyw5vhOSentLv/Mabw40=",
         "ref": "refs/heads/main",
-        "rev": "2ac0db3843a19c53a0fdd7096785a17277531dcc",
-        "revCount": 2,
+        "rev": "c2606a5fc885288f8587d0a5e4fefd8439d14c9d",
+        "revCount": 3,
         "type": "git",
         "url": "ssh://git@github.com/StealthBadger747/ycotd-python-queue"
       },
