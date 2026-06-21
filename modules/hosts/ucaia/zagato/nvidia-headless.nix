@@ -87,7 +87,7 @@
   privileged_without_host_devices = false
 
 [plugins.'io.containerd.cri.v1.runtime'.containerd.runtimes.nvidia.options]
-  BinaryName = "${lib.getExe' pkgs.nvidia-container-toolkit "nvidia-container-runtime"}"
+  BinaryName = "${lib.getExe' pkgs.nvidia-container-toolkit.tools "nvidia-container-runtime.cdi"}"
   SystemdCgroup = true
 EOF
     '';
