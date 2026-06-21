@@ -15,6 +15,9 @@
         sshOpts = [
           "-o" "StrictHostKeyChecking=no"
           "-o" "UserKnownHostsFile=/dev/null"
+          "-o" "IdentityAgent=none"
+          "-o" "IdentitiesOnly=yes"
+          "-i" "/home/erikp/.ssh/remote-machines"
         ];
       };
     };

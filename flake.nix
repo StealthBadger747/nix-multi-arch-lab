@@ -26,7 +26,7 @@
     nixpkgs-oci-aarch64-base.url = "github:NixOS/nixpkgs/nixos-25.11";
     nixpkgs-proxmox-base.url = "github:NixOS/nixpkgs/nixos-25.11";
     nixpkgs-pc24-proxmox.url = "github:NixOS/nixpkgs/nixos-26.05";
-    nixpkgs-oci-authentik.url = "github:NixOS/nixpkgs/nixos-25.11";
+    nixpkgs-oci-authentik.url = "github:NixOS/nixpkgs/nixos-26.05";
     nixpkgs-bugatti-proxmox-nix.url = "github:NixOS/nixpkgs/nixos-25.11";
     nixpkgs-giulia-proxmox.url = "github:NixOS/nixpkgs/nixos-25.11";
     nixpkgs-aspen-proxmox.url = "github:NixOS/nixpkgs/nixos-26.05";
@@ -55,7 +55,7 @@
     };
     ycotd-python-queue = {
       url = "git+ssh://git@github.com/StealthBadger747/ycotd-python-queue";
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs.follows = "nixpkgs-oci-authentik";
     };
     nixarr = {
       url = "github:StealthBadger747/nixarr/add-qbittorrent";

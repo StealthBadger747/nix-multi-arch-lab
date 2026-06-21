@@ -4,11 +4,15 @@ let
   tld = "parawell.cloud";
   fqdn = "${host}.${tld}";
   timezone = "America/Los_Angeles";
+  pipxNoCheck = pkgs.pipx.overridePythonAttrs (_old: {
+    doCheck = false;
+  });
 in {
 
   imports = [
     ./pc24/zfs.nix
     ./pc24/nfs.nix
+    ./pc24/seaweedfs.nix
     ./palworld.nix
     # ../../overlays/nixarr/qbittorrent.nix
     ../../overlays/nixarr/overseerr.nix
@@ -36,7 +40,8 @@ in {
       strace
       tcpdump
       unzip
-      pipx
+      pipxNoCheck
+      python3
       yq-go
       zoxide
       zip
