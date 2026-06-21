@@ -13,6 +13,7 @@ in {
   imports = [
     ../default.nix
     ../proxmox-settings.nix
+    ../nvidia-headless.nix
   ];
 
   proxmox = {
@@ -50,24 +51,43 @@ in {
     wantedBy = [ "sysinit.target" ];
     after = [ "cloud-final.service" ];
     wants = [ "cloud-final.service" ];
-    
+
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
     };
-    
+
     script = ''
-      # Wait for cloud-init to complete all phases
+      set -euo pipefail
+
+      # Wait for cloud-init to complete all phases.
       ${pkgs.cloud-init}/bin/cloud-init status --wait
-      
-      if [ ! -f /var/lib/sops-nix/key.txt ]; then
-        mkdir -p /var/lib/sops-nix
-        ${pkgs.cloud-init}/bin/cloud-init query -f "{{ ds.meta_data.age_key }}" > /var/lib/sops-nix/key.txt
-        chmod 600 /var/lib/sops-nix/key.txt
-        echo "Age key extracted from cloud-init"
-      fi
+
+      # Refresh the key on every run so a stale key from an image or previous
+      # cloud-init configuration cannot survive indefinitely. Write and
+      # validate it before atomically replacing the active key.
+      ${pkgs.coreutils}/bin/install -d -m 0700 /var/lib/sops-nix
+      tmp="$(${pkgs.coreutils}/bin/mktemp /var/lib/sops-nix/key.txt.XXXXXX)"
+      trap '${pkgs.coreutils}/bin/rm -f "$tmp"' EXIT
+
+      ${pkgs.cloud-init}/bin/cloud-init query -f "{{ ds.meta_data.age_key }}" > "$tmp"
+      ${pkgs.coreutils}/bin/chmod 0600 "$tmp"
+      ${pkgs.age}/bin/age-keygen -y "$tmp" > /dev/null
+      ${pkgs.coreutils}/bin/mv -f "$tmp" /var/lib/sops-nix/key.txt
+
+      trap - EXIT
+      echo "Age key refreshed from cloud-init"
     '';
   };
+
+  # Advertise the NVIDIA RTX A2000 GPU to Kubernetes.
+  # Note: these labels mark the node; the nvidia.com/gpu *resource* is only
+  # exposed once the NVIDIA k8s-device-plugin DaemonSet is running in the cluster.
+  services.k3s.extraFlags = [
+    "--node-label=nvidia.com/gpu.present=true"
+    "--node-label=nvidia.com/gpu.product=NVIDIA-RTX-A2000"
+    "--node-label=nvidia.com/gpu.count=1"
+  ];
 
   # K3s configuration for a worker node
   services.k3s = {

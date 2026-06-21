@@ -112,37 +112,7 @@
       };
     };
 
-    k3s-master-1 = {
-      hostname = "10.0.20.11";
-      sshUser = "erikp";
-      profiles.system = {
-        user = "root";
-        path = inputs.deploy-rs.lib."x86_64-linux".activate.nixos
-          self.nixosConfigurations.k3s-master-1;
-        magicRollback = true;
-        sshOpts = [
-          "-o" "StrictHostKeyChecking=no"
-          "-o" "UserKnownHostsFile=/dev/null"
-        ];
-      };
-    };
-
     zagato-master-02 = {
-      hostname = "10.0.20.12";
-      sshUser = "erikp";
-      profiles.system = {
-        user = "root";
-        path = inputs.deploy-rs.lib."x86_64-linux".activate.nixos
-          self.nixosConfigurations.k3s-master-2;
-        magicRollback = true;
-        sshOpts = [
-          "-o" "StrictHostKeyChecking=no"
-          "-o" "UserKnownHostsFile=/dev/null"
-        ];
-      };
-    };
-
-    k3s-master-2 = {
       hostname = "10.0.20.12";
       sshUser = "erikp";
       profiles.system = {
@@ -172,35 +142,20 @@
       };
     };
 
-    k3s-master-3 = {
-      hostname = "10.0.20.13";
+    zagato-worker-01 = {
+      hostname = "10.0.20.14";
       sshUser = "erikp";
       profiles.system = {
         user = "root";
         path = inputs.deploy-rs.lib."x86_64-linux".activate.nixos
-          self.nixosConfigurations.k3s-master-3;
-        magicRollback = true;
+          self.nixosConfigurations.k3s-worker-1;
+        magicRollback = false;
         sshOpts = [
           "-o" "StrictHostKeyChecking=no"
           "-o" "UserKnownHostsFile=/dev/null"
         ];
       };
     };
-
-    # zagato-worker-01 = {
-    #   hostname = "10.0.4.214";
-    #   sshUser = "erikp";
-    #   profiles.system = {
-    #     user = "root";
-    #     path = inputs.deploy-rs.lib."x86_64-linux".activate.nixos
-    #       self.nixosConfigurations.k3s-worker-1;
-    #     magicRollback = false;
-    #     sshOpts = [
-    #       "-o" "StrictHostKeyChecking=no"
-    #       "-o" "UserKnownHostsFile=/dev/null"
-    #     ];
-    #   };
-    # };
 
     # zagato-worker-02 = {
     #   hostname = "10.0.20.15";
