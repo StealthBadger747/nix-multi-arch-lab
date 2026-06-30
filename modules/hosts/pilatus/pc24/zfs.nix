@@ -35,7 +35,12 @@ in
     # L2ARC tuning parameters - optimal for SSD cache
     "zfs.l2arc_write_max=67108864"    # 64MB max write size per interval
     "zfs.l2arc_write_boost=134217728" # Initial 128MB write boost 
+    # Disable buggy Block Cloning (BRT) to prevent txg_sync deadlocks
+    "zfs.zfs_bclone_enabled=0"
   ];
+
+  # Rebuilding kernel/initrd parameters
+  boot.zfs.forceImportRoot = false;
   
   # Create mount points for ZFS pools if needed
   systemd.tmpfiles.rules = [

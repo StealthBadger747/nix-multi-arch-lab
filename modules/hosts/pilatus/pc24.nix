@@ -256,11 +256,16 @@ in {
     # qBittorrent can exit cleanly, leaving systemd with no failed unit to restart.
     Restart = lib.mkForce "always";
     # Keep torrent traffic from starving Plex/media workloads.
-    Nice = 19;
-    IOSchedulingClass = "idle";
+    Nice = 10;
     CPUWeight = 10;
     IOWeight = 10;
+    UMask = lib.mkForce "0002";
   };
+
+  systemd.services.sonarr.serviceConfig.UMask = lib.mkForce "0002";
+  systemd.services.radarr.serviceConfig.UMask = lib.mkForce "0002";
+  systemd.services.lidarr.serviceConfig.UMask = lib.mkForce "0002";
+  systemd.services.prowlarr.serviceConfig.UMask = lib.mkForce "0002";
 
   networking = {
     hostName = "pilatus-nix";
