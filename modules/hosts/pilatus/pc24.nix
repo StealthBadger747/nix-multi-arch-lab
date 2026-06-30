@@ -275,6 +275,9 @@ in {
       enable = true;
       allowedTCPPorts = [ 22 80 443 8007 ];
     };
+    localCommands = ''
+      ip rule add to 10.16.0.0/24 lookup main priority 5200 || true
+    '';
   };
 
   # Grant Plex permission to use the Intel Arc GPU for hardware-accelerated transcoding
