@@ -13,6 +13,7 @@ in {
     ./pc24/zfs.nix
     ./pc24/nfs.nix
     ./pc24/seaweedfs.nix
+    ./pc24/plex-ipv6-updater.nix
     ./palworld.nix
     # ../../overlays/nixarr/qbittorrent.nix
     ../../overlays/nixarr/overseerr.nix
