@@ -276,5 +276,10 @@ in {
     };
   };
 
+  # Grant Plex permission to use the Intel Arc GPU for hardware-accelerated transcoding
+  users.users.plex = {
+    extraGroups = [ "video" "render" ];
+  };
+
   system.stateVersion = "24.05";
 }
