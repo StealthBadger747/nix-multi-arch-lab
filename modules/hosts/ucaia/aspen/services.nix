@@ -40,7 +40,7 @@ in {
         # KubeNodeSmith assigns this prefix only to the Mayastor pool. Every
         # other netboot client continues to receive the generic worker image.
         dhcp-mac = "set:mayastor,02:4d:*";
-        dhcp-boot = [ "tag:mayastor,mayastor.ipxe" "boot.ipxe" ];
+        dhcp-boot = [ "tag:mayastor,mayastor.ipxe" "tag:!mayastor,boot.ipxe" ];
         
         # Alternative: More specific PXE configuration
         # You can also use conditional booting based on client architecture
