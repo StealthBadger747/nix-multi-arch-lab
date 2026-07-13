@@ -11,6 +11,7 @@ let
       system = null;
       modules = [
         { nixpkgs.hostPlatform.system = system; }
+        ./../modules/configs/nix-cache.nix
       ] ++ modules;
       specialArgs = {
         pkgs-unstable = mkPkgsFrom unstableInput system;
@@ -79,6 +80,7 @@ in {
       modules = [
         { nixpkgs.hostPlatform.system = "x86_64-linux"; }
         "${inputs.nixpkgs-headplane}/nixos/modules/virtualisation/oci-image.nix"
+        ./../modules/configs/nix-cache.nix
         ./../modules/configs/common.nix
         ./../modules/hosts/oracle-cloud/free-x86.nix
         inputs.sops-nix.nixosModules.sops
