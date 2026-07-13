@@ -75,9 +75,10 @@ in {
     install -m644 ${netboot}/netboot.ipxe /srv/tftp/boot.ipxe
     install -m644 ${mayastorNetboot}/bzImage /srv/tftp/mayastor-bzImage
     install -m644 ${mayastorNetboot}/initrd /srv/tftp/mayastor-initrd
-    substitute ${mayastorNetboot}/netboot.ipxe /srv/tftp/mayastor.ipxe \
-      --replace-fail /bzImage /mayastor-bzImage \
-      --replace-fail /initrd /mayastor-initrd
+    ${pkgs.gnused}/bin/sed \
+      -e 's|/bzImage|/mayastor-bzImage|g' \
+      -e 's|/initrd|/mayastor-initrd|g' \
+      ${mayastorNetboot}/netboot.ipxe > /srv/tftp/mayastor.ipxe
     chown dnsmasq:dnsmasq /srv/tftp /srv/tftp/bzImage /srv/tftp/initrd /srv/tftp/boot.ipxe /srv/tftp/mayastor-bzImage /srv/tftp/mayastor-initrd /srv/tftp/mayastor.ipxe
   '';
 
