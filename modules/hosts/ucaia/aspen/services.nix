@@ -8,6 +8,7 @@
   ...
 }: let
   netboot = self.packages.${pkgs.stdenv.hostPlatform.system}.k3s-worker-N-netboot-files;
+  mayastorNetboot = self.packages.${pkgs.stdenv.hostPlatform.system}.k3s-mayastor-worker-N-netboot-files;
 in {
   services = {
     dnsmasq = {
@@ -36,7 +37,10 @@ in {
         ];
         
         # PXE boot filename (option 67)
-        dhcp-boot = "boot.ipxe";
+        # KubeNodeSmith assigns this prefix only to the Mayastor pool. Every
+        # other netboot client continues to receive the generic worker image.
+        dhcp-mac = "set:mayastor,02:4d:*";
+        dhcp-boot = [ "tag:mayastor,mayastor.ipxe" "boot.ipxe" ];
         
         # Alternative: More specific PXE configuration
         # You can also use conditional booting based on client architecture
@@ -69,7 +73,12 @@ in {
     install -m644 ${netboot}/bzImage /srv/tftp/bzImage
     install -m644 ${netboot}/initrd /srv/tftp/initrd
     install -m644 ${netboot}/netboot.ipxe /srv/tftp/boot.ipxe
-    chown dnsmasq:dnsmasq /srv/tftp /srv/tftp/bzImage /srv/tftp/initrd /srv/tftp/boot.ipxe
+    install -m644 ${mayastorNetboot}/bzImage /srv/tftp/mayastor-bzImage
+    install -m644 ${mayastorNetboot}/initrd /srv/tftp/mayastor-initrd
+    substitute ${mayastorNetboot}/netboot.ipxe /srv/tftp/mayastor.ipxe \
+      --replace-fail /bzImage /mayastor-bzImage \
+      --replace-fail /initrd /mayastor-initrd
+    chown dnsmasq:dnsmasq /srv/tftp /srv/tftp/bzImage /srv/tftp/initrd /srv/tftp/boot.ipxe /srv/tftp/mayastor-bzImage /srv/tftp/mayastor-initrd /srv/tftp/mayastor.ipxe
   '';
 
   # Open firewall ports for TFTP and DHCP

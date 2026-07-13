@@ -250,5 +250,16 @@ in {
         inputs.sops-nix.nixosModules.sops
       ];
     };
+
+    k3s-mayastor-worker-N = mkHost {
+      nixpkgsInput = inputs.nixpkgs-zagato;
+      unstableInput = inputs.nixpkgs-unstable-zagato;
+      system = "x86_64-linux";
+      modules = [
+        "${inputs.nixpkgs-zagato}/nixos/modules/installer/netboot/netboot-minimal.nix"
+        ./../modules/hosts/ucaia/zagato/k3s-nodes/worker-mayastor-N.nix
+        inputs.sops-nix.nixosModules.sops
+      ];
+    };
   };
 }

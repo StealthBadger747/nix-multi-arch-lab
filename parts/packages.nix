@@ -109,6 +109,19 @@
             echo "This package can only be built on x86_64-linux systems"
             exit 1
           '';
+
+        k3s-mayastor-worker-N-netboot-files =
+          if system == "x86_64-linux"
+          then pkgs.runCommand "k3s-mayastor-worker-N-netboot-files" { } ''
+            mkdir -p $out
+            cp ${configs.k3s-mayastor-worker-N.config.system.build.kernel}/bzImage $out/bzImage
+            cp ${configs.k3s-mayastor-worker-N.config.system.build.netbootRamdisk}/initrd $out/initrd
+            cp ${configs.k3s-mayastor-worker-N.config.system.build.netbootIpxeScript}/netboot.ipxe $out/netboot.ipxe
+          ''
+          else pkgs.runCommand "k3s-mayastor-worker-N-netboot-files" { } ''
+            echo "This package can only be built on x86_64-linux systems"
+            exit 1
+          '';
       };
     };
 }
