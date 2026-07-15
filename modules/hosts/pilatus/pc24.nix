@@ -172,6 +172,31 @@ in {
     "d /BIGBOY/pbs/etc 0750 34 34 -"
     "d /BIGBOY/pbs/logs 0750 34 34 -"
     "d /BIGBOY/pbs/lib 0750 34 34 -"
+
+    # Declaratively manage permissions and POSIX ACLs for the Plex media directories
+    # 1. Ensure directories exist, are owned by media group, and are group-writable (775)
+    "d /BIGBOY/Plex/Incomplete 0775 - media - -"
+    "d /BIGBOY/Plex/TV 0775 - media - -"
+    "d /BIGBOY/Plex/Movies 0775 - media - -"
+    "d /BIGBOY/Plex/Anime 0775 - media - -"
+    "d /BIGBOY/Plex/Music 0775 - media - -"
+    "d /BIGBOY/JBOD/Plex 0775 - media - -"
+
+    # 2. Recursively force mode and group ownership for existing contents
+    "Z /BIGBOY/Plex/Incomplete 0775 - media - -"
+    "Z /BIGBOY/Plex/TV 0775 - media - -"
+    "Z /BIGBOY/Plex/Movies 0775 - media - -"
+    "Z /BIGBOY/Plex/Anime 0775 - media - -"
+    "Z /BIGBOY/Plex/Music 0775 - media - -"
+    "Z /BIGBOY/JBOD/Plex 0775 - media - -"
+
+    # 3. Apply POSIX ACLs recursively (A) and as defaults (d) so new files inherit media group rwx
+    "A /BIGBOY/Plex/Incomplete - - - - d:g:media:rwx,g:media:rwx"
+    "A /BIGBOY/Plex/TV - - - - d:g:media:rwx,g:media:rwx"
+    "A /BIGBOY/Plex/Movies - - - - d:g:media:rwx,g:media:rwx"
+    "A /BIGBOY/Plex/Anime - - - - d:g:media:rwx,g:media:rwx"
+    "A /BIGBOY/Plex/Music - - - - d:g:media:rwx,g:media:rwx"
+    "A /BIGBOY/JBOD/Plex - - - - d:g:media:rwx,g:media:rwx"
   ];
 
   virtualisation.oci-containers.containers.pbs = {
@@ -270,20 +295,33 @@ in {
 
   networking = {
     hostName = "pilatus-nix";
+    enableIPv6 = false;
     nameservers = [ "1.1.1.1" "8.8.4.4" "8.8.8.8" "9.9.9.9" ];
     firewall = {
       enable = true;
       allowedTCPPorts = [ 22 80 443 8007 ];
     };
-    localCommands = ''
-      ip rule add to 10.16.0.0/24 lookup main priority 5200 || true
-    '';
+  };
+
+  # Declaratively apply local routing rules for the Nixarr VPN namespace confinement
+  systemd.services.local-routing-rules = {
+    description = "Apply local routing rules for Nixarr VPN confinement";
+    after = [ "network.target" ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = "-${pkgs.iproute2}/bin/ip rule add to 10.16.0.0/24 lookup main priority 5200";
+      ExecStop = "-${pkgs.iproute2}/bin/ip rule del to 10.16.0.0/24 lookup main priority 5200";
+    };
   };
 
   # Grant Plex permission to use the Intel Arc GPU for hardware-accelerated transcoding
   users.users.plex = {
     extraGroups = [ "video" "render" ];
   };
+
+
 
   system.stateVersion = "24.05";
 }
