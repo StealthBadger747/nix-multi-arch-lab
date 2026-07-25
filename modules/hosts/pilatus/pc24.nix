@@ -462,6 +462,12 @@ in {
 
         def browserless_fetch(path):
             token = credential("browserless-api-key")
+            usage_url = "https://api.browserless.io/v1/account/usage?token=" + urllib.parse.quote(token, safe="")
+            with urllib.request.urlopen(usage_url, timeout=15) as response:
+                usage = json.load(response)
+            remaining_units = usage.get("units", {}).get("remaining")
+            if not isinstance(remaining_units, (int, float)) or remaining_units <= 0:
+                raise RuntimeError("Browserless unit allowance is exhausted")
             payload = json.dumps({
                 "url": ORIGIN + path,
                 "content": True,
