@@ -99,6 +99,13 @@ in {
         mode = "0400";
         restartUnits = [ "1337x-flaresolverr-bridge.service" ];
       };
+      kernel-dashboard-cookie = {
+        sopsFile = ../../../secrets/hosts/pilatus/pc24.yaml;
+        owner = "root";
+        group = "root";
+        mode = "0400";
+        restartUnits = [ "1337x-flaresolverr-bridge.service" ];
+      };
     };
   };
 
@@ -322,6 +329,7 @@ in {
         import urllib.error
         import urllib.parse
         import urllib.request
+        from http.cookies import SimpleCookie
         from http.server import BaseHTTPRequestHandler, HTTPServer, ThreadingHTTPServer
 
         BROWSERLESS_ENDPOINT = "https://production-sfo.browserless.io/unblock"
@@ -362,6 +370,13 @@ in {
                     payload TEXT NOT NULL
                 )
             """)
+            connection.execute("""
+                CREATE TABLE IF NOT EXISTS provider_auth (
+                    name TEXT PRIMARY KEY,
+                    value TEXT NOT NULL,
+                    updated_at REAL NOT NULL
+                )
+            """)
 
         def store_usage(provider, payload):
             with database() as connection:
@@ -369,6 +384,56 @@ in {
                     "INSERT OR REPLACE INTO provider_usage(provider, fetched_at, payload) VALUES (?, ?, ?)",
                     (provider, time.time(), json.dumps(payload)),
                 )
+
+        def stored_auth(name, fallback):
+            with database() as connection:
+                row = connection.execute(
+                    "SELECT value FROM provider_auth WHERE name = ?", (name,)
+                ).fetchone()
+            return row[0] if row else fallback
+
+        def store_auth(name, value):
+            with database() as connection:
+                connection.execute(
+                    "INSERT OR REPLACE INTO provider_auth(name, value, updated_at) VALUES (?, ?, ?)",
+                    (name, value, time.time()),
+                )
+
+        def refresh_kernel_dashboard_cookie():
+            cookie_header = stored_auth(
+                "kernel_dashboard_cookie", credential("kernel-dashboard-cookie")
+            )
+            # Clerk sessions use short-lived tokens.  `/v1/client` merely reads
+            # the session; the Clerk frontend uses this touch route to keep it
+            # alive while the dashboard is open.
+            touch_url = (
+                "https://clerk.onkernel.com/v1/client/touch?"
+                + urllib.parse.urlencode({"redirect_url": "https://dashboard.onkernel.com/"})
+            )
+            request = urllib.request.Request(
+                touch_url,
+                headers={
+                    "Cookie": cookie_header,
+                    "Origin": "https://dashboard.onkernel.com",
+                    "Referer": "https://dashboard.onkernel.com/",
+                    "User-Agent": "Mozilla/5.0",
+                },
+            )
+            with urllib.request.urlopen(request, timeout=15) as response:
+                # Keep any rotated cookies in the protected StateDirectory so the
+                # refreshed jar survives service restarts.
+                response.read()
+                set_cookies = response.headers.get_all("Set-Cookie") or []
+            jar = SimpleCookie()
+            jar.load(cookie_header)
+            for set_cookie in set_cookies:
+                replacement = SimpleCookie()
+                replacement.load(set_cookie)
+                for name, morsel in replacement.items():
+                    jar[name] = morsel.value
+            refreshed = "; ".join(f"{name}={morsel.value}" for name, morsel in jar.items())
+            store_auth("kernel_dashboard_cookie", refreshed)
+            return refreshed
 
         def refresh_provider_usage():
             with METRICS_LOCK:
@@ -397,6 +462,25 @@ in {
                 })
             except (OSError, RuntimeError, ValueError, urllib.error.URLError) as error:
                 store_usage("kernel_sessions_error", {"error": type(error).__name__})
+            try:
+                dashboard_request = urllib.request.Request(
+                    "https://dashboard.onkernel.com/api/billing",
+                    headers={"Cookie": refresh_kernel_dashboard_cookie()},
+                )
+                with urllib.request.urlopen(dashboard_request, timeout=15) as response:
+                    billing = json.load(response)
+                store_usage("kernel_billing", {
+                    "plan": billing.get("org", {}).get("plan_id"),
+                    "credit_balance": billing.get("creditBalance"),
+                    "upcoming_invoice_total_usd": billing.get("upcomingInvoiceTotalUsd"),
+                    "usage_rates": billing.get("usageRates"),
+                    "source": "Kernel dashboard billing API",
+                })
+            except (OSError, RuntimeError, ValueError, urllib.error.URLError) as error:
+                store_usage("kernel_billing_error", {
+                    "error": type(error).__name__,
+                    "fallback": "Use kernel_sessions for persisted session-uptime estimates.",
+                })
 
         def call_provider(name, action):
             started = time.monotonic()
@@ -623,6 +707,12 @@ in {
             def log_message(self, format, *args):
                 pass
 
+        def usage_refresh_loop():
+            while True:
+                refresh_provider_usage()
+                time.sleep(60)
+
+        threading.Thread(target=usage_refresh_loop, daemon=True).start()
         threading.Thread(
             target=ThreadingHTTPServer(("0.0.0.0", 1337), StatsHandler).serve_forever,
             daemon=True,
@@ -643,6 +733,7 @@ in {
         LoadCredential = [
           "browserless-api-key:${config.sops.secrets.browserless-api-key.path}"
           "kernel-api-key:${config.sops.secrets.kernel-api-key.path}"
+          "kernel-dashboard-cookie:${config.sops.secrets.kernel-dashboard-cookie.path}"
         ];
       };
     };
