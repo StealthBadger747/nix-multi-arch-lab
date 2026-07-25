@@ -407,35 +407,65 @@ in {
             cookie_header = stored_auth(
                 "kernel_dashboard_cookie", credential("kernel-dashboard-cookie")
             )
+            jar = SimpleCookie()
+            jar.load(cookie_header)
+
+            def update_jar(response):
+                for set_cookie in response.headers.get_all("Set-Cookie") or []:
+                    replacement = SimpleCookie()
+                    replacement.load(set_cookie)
+                    for name, morsel in replacement.items():
+                        jar[name] = morsel.value
+
+            def cookie_value():
+                return "; ".join(f"{name}={morsel.value}" for name, morsel in jar.items())
+
+            headers = {
+                "Origin": "https://dashboard.onkernel.com",
+                "Referer": "https://dashboard.onkernel.com/",
+                "User-Agent": "Mozilla/5.0",
+            }
             # Clerk sessions use short-lived tokens.  `/v1/client` merely reads
             # the session; the Clerk frontend uses this touch route to keep it
-            # alive while the dashboard is open.
+            # alive while the dashboard is open, then mints a new JWT.
             touch_url = (
                 "https://clerk.onkernel.com/v1/client/touch?"
                 + urllib.parse.urlencode({"redirect_url": "https://dashboard.onkernel.com/"})
             )
             request = urllib.request.Request(
                 touch_url,
-                headers={
-                    "Cookie": cookie_header,
-                    "Origin": "https://dashboard.onkernel.com",
-                    "Referer": "https://dashboard.onkernel.com/",
-                    "User-Agent": "Mozilla/5.0",
-                },
+                headers={**headers, "Cookie": cookie_value()},
             )
             with urllib.request.urlopen(request, timeout=15) as response:
-                # Keep any rotated cookies in the protected StateDirectory so the
-                # refreshed jar survives service restarts.
                 response.read()
-                set_cookies = response.headers.get_all("Set-Cookie") or []
-            jar = SimpleCookie()
-            jar.load(cookie_header)
-            for set_cookie in set_cookies:
-                replacement = SimpleCookie()
-                replacement.load(set_cookie)
-                for name, morsel in replacement.items():
-                    jar[name] = morsel.value
-            refreshed = "; ".join(f"{name}={morsel.value}" for name, morsel in jar.items())
+                update_jar(response)
+            client_request = urllib.request.Request(
+                "https://clerk.onkernel.com/v1/client",
+                headers={**headers, "Cookie": cookie_value()},
+            )
+            with urllib.request.urlopen(client_request, timeout=15) as response:
+                client = json.load(response).get("response", {})
+                update_jar(response)
+            session_id = client.get("last_active_session_id")
+            if not session_id:
+                raise RuntimeError("Kernel dashboard Clerk session is not authenticated")
+            token_request = urllib.request.Request(
+                "https://clerk.onkernel.com/v1/client/sessions/" + urllib.parse.quote(session_id, safe="") + "/tokens",
+                data=b"{}",
+                method="POST",
+                headers={
+                    **headers,
+                    "Cookie": cookie_value(),
+                    "Content-Type": "application/json",
+                },
+            )
+            with urllib.request.urlopen(token_request, timeout=15) as response:
+                minted = json.load(response)
+                update_jar(response)
+            if not minted.get("jwt"):
+                raise RuntimeError("Kernel dashboard Clerk token mint returned no JWT")
+            jar["__session"] = minted["jwt"]
+            refreshed = cookie_value()
             store_auth("kernel_dashboard_cookie", refreshed)
             return refreshed
 
@@ -717,7 +747,17 @@ in {
                 refresh_provider_usage()
                 time.sleep(60)
 
+        def kernel_session_heartbeat_loop():
+            time.sleep(15)
+            while True:
+                try:
+                    refresh_kernel_dashboard_cookie()
+                except Exception:
+                    pass
+                time.sleep(30)
+
         threading.Thread(target=usage_refresh_loop, daemon=True).start()
+        threading.Thread(target=kernel_session_heartbeat_loop, daemon=True).start()
         threading.Thread(
             target=ThreadingHTTPServer(("0.0.0.0", 1337), StatsHandler).serve_forever,
             daemon=True,
