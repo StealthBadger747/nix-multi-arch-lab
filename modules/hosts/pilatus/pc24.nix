@@ -85,6 +85,20 @@ in {
         group = "root";
         mode = "0400";
       };
+      browserless-api-key = {
+        sopsFile = ../../../secrets/hosts/pilatus/pc24.yaml;
+        owner = "root";
+        group = "root";
+        mode = "0400";
+        restartUnits = [ "1337x-flaresolverr-bridge.service" ];
+      };
+      kernel-api-key = {
+        sopsFile = ../../../secrets/hosts/pilatus/pc24.yaml;
+        owner = "root";
+        group = "root";
+        mode = "0400";
+        restartUnits = [ "1337x-flaresolverr-bridge.service" ];
+      };
     };
   };
 
@@ -292,6 +306,340 @@ in {
   systemd.services.radarr.serviceConfig.UMask = lib.mkForce "0002";
   systemd.services.lidarr.serviceConfig.UMask = lib.mkForce "0002";
   systemd.services.prowlarr.serviceConfig.UMask = lib.mkForce "0002";
+  systemd.services.prowlarr.environment.DOTNET_SYSTEM_NET_HTTP_SOCKETSHTTPHANDLER_HTTP2SUPPORT = "0";
+
+  # 1337x sometimes returns a slow Varnish 503 to Prowlarr's initial request.
+  # Browserless Unblock has a residential-proxy option that succeeds where the
+  # server's shared IP fails Cloudflare. FlareSolverr remains a no-cost fallback.
+  systemd.services."1337x-flaresolverr-bridge" =
+    let
+      bridge = pkgs.writeText "1337x-flaresolverr-bridge.py" ''
+        import json
+        import os
+        import sqlite3
+        import threading
+        import time
+        import urllib.error
+        import urllib.parse
+        import urllib.request
+        from http.server import BaseHTTPRequestHandler, HTTPServer, ThreadingHTTPServer
+
+        BROWSERLESS_ENDPOINT = "https://production-sfo.browserless.io/unblock"
+        FLARESOLVERR_URL = "http://127.0.0.1:8191/v1"
+        KERNEL_ENDPOINT = "https://api.onkernel.com"
+        ORIGIN = "https://1337x.st"
+        REQUEST_LOCK = threading.Lock()
+        METRICS_LOCK = threading.Lock()
+        STATE_DIRECTORY = os.environ.get("STATE_DIRECTORY", "/var/lib/1337x-bridge")
+        DATABASE_PATH = os.path.join(STATE_DIRECTORY, "usage.sqlite3")
+        METRICS = {
+            "started_at": time.time(),
+            "in_flight": 0,
+            "last_usage_refresh": 0.0,
+        }
+
+        os.makedirs(STATE_DIRECTORY, exist_ok=True)
+
+        def database():
+            connection = sqlite3.connect(DATABASE_PATH, timeout=5)
+            connection.execute("PRAGMA journal_mode=WAL")
+            return connection
+
+        with database() as connection:
+            connection.execute("""
+                CREATE TABLE IF NOT EXISTS provider_events (
+                    id INTEGER PRIMARY KEY,
+                    timestamp REAL NOT NULL,
+                    provider TEXT NOT NULL,
+                    success INTEGER NOT NULL,
+                    elapsed_seconds REAL NOT NULL
+                )
+            """)
+            connection.execute("""
+                CREATE TABLE IF NOT EXISTS provider_usage (
+                    provider TEXT PRIMARY KEY,
+                    fetched_at REAL NOT NULL,
+                    payload TEXT NOT NULL
+                )
+            """)
+
+        def store_usage(provider, payload):
+            with database() as connection:
+                connection.execute(
+                    "INSERT OR REPLACE INTO provider_usage(provider, fetched_at, payload) VALUES (?, ?, ?)",
+                    (provider, time.time(), json.dumps(payload)),
+                )
+
+        def refresh_provider_usage():
+            with METRICS_LOCK:
+                if time.time() - METRICS["last_usage_refresh"] < 60:
+                    return
+                METRICS["last_usage_refresh"] = time.time()
+            try:
+                token = credential("browserless-api-key")
+                url = "https://api.browserless.io/v1/account/usage?token=" + urllib.parse.quote(token, safe="")
+                with urllib.request.urlopen(url, timeout=15) as response:
+                    store_usage("browserless_account", json.load(response))
+            except (OSError, RuntimeError, ValueError, urllib.error.URLError) as error:
+                store_usage("browserless_account_error", {"error": type(error).__name__})
+            try:
+                token = credential("kernel-api-key")
+                request = urllib.request.Request(
+                    "https://api.onkernel.com/browsers?include_deleted=true&limit=100",
+                    headers={"Authorization": "Bearer " + token},
+                )
+                with urllib.request.urlopen(request, timeout=15) as response:
+                    sessions = json.load(response)
+                store_usage("kernel_sessions", {
+                    "session_count": len(sessions),
+                    "uptime_ms": sum(session.get("usage", {}).get("uptime_ms", 0) for session in sessions),
+                    "source": "Kernel browser sessions API (not an account credit balance)",
+                })
+            except (OSError, RuntimeError, ValueError, urllib.error.URLError) as error:
+                store_usage("kernel_sessions_error", {"error": type(error).__name__})
+
+        def call_provider(name, action):
+            started = time.monotonic()
+            try:
+                value = action()
+            except Exception:
+                with database() as connection:
+                    connection.execute(
+                        "INSERT INTO provider_events(timestamp, provider, success, elapsed_seconds) VALUES (?, ?, ?, ?)",
+                        (time.time(), name, 0, time.monotonic() - started),
+                    )
+                raise
+            with database() as connection:
+                connection.execute(
+                    "INSERT INTO provider_events(timestamp, provider, success, elapsed_seconds) VALUES (?, ?, ?, ?)",
+                    (time.time(), name, 1, time.monotonic() - started),
+                )
+            return value
+
+        def metrics_snapshot():
+            refresh_provider_usage()
+            with database() as connection:
+                rows = connection.execute("""
+                    SELECT provider, COUNT(*), COALESCE(SUM(success), 0),
+                           COUNT(*) - COALESCE(SUM(success), 0), COALESCE(SUM(elapsed_seconds), 0)
+                    FROM provider_events GROUP BY provider
+                """).fetchall()
+                usage_rows = connection.execute(
+                    "SELECT provider, fetched_at, payload FROM provider_usage"
+                ).fetchall()
+            providers = {
+                name: {
+                    "attempts": attempts,
+                    "successes": successes,
+                    "failures": failures,
+                    "elapsed_seconds": round(elapsed, 2),
+                }
+                for name, attempts, successes, failures, elapsed in rows
+            }
+            for name in ("browserless", "kernel", "flaresolverr"):
+                providers.setdefault(name, {"attempts": 0, "successes": 0, "failures": 0, "elapsed_seconds": 0.0})
+            with METRICS_LOCK:
+                return {
+                    "uptime_seconds": round(time.time() - METRICS["started_at"], 1),
+                    "in_flight": METRICS["in_flight"],
+                    "persistent_database": DATABASE_PATH,
+                    "providers": providers,
+                    "provider_api_usage": {
+                        provider: {"fetched_at": fetched_at, "data": json.loads(payload)}
+                        for provider, fetched_at, payload in usage_rows
+                    },
+                }
+
+        def credential(name):
+            credential_dir = os.environ.get("CREDENTIALS_DIRECTORY")
+            if not credential_dir:
+                raise RuntimeError(f"{name} credential is unavailable")
+            with open(os.path.join(credential_dir, name), encoding="utf-8") as file:
+                value = file.read().strip()
+            if not value:
+                raise RuntimeError(f"{name} credential is empty")
+            return value
+
+        def browserless_fetch(path):
+            token = credential("browserless-api-key")
+            payload = json.dumps({
+                "url": ORIGIN + path,
+                "content": True,
+                "cookies": False,
+                "screenshot": False,
+                "browserWSEndpoint": False,
+            }).encode()
+            endpoint = BROWSERLESS_ENDPOINT + "?token=" + urllib.parse.quote(token, safe="") + "&proxy=residential"
+            request = urllib.request.Request(
+                endpoint,
+                data=payload,
+                headers={"Content-Type": "application/json"},
+            )
+            with urllib.request.urlopen(request, timeout=110) as response:
+                result = json.load(response)
+            body = result.get("content")
+            if not body or "/torrent/" not in body:
+                raise RuntimeError("Browserless returned no 1337x results")
+            return body
+
+        def kernel_fetch(path):
+            token = credential("kernel-api-key")
+            headers = {
+                "Authorization": "Bearer " + token,
+                "Content-Type": "application/json",
+            }
+
+            def request(url, data=None, timeout=75, method=None):
+                payload = None if data is None else json.dumps(data).encode()
+                with urllib.request.urlopen(
+                    urllib.request.Request(url, data=payload, headers=headers, method=method),
+                    timeout=timeout,
+                ) as response:
+                    raw = response.read()
+                    return json.loads(raw) if raw else None
+
+            target_url = ORIGIN + path
+            browser = request(KERNEL_ENDPOINT + "/browsers", {
+                "stealth": True,
+                "headless": False,
+                "start_url": target_url,
+                "timeout_seconds": 120,
+            }, timeout=30)
+            session_id = browser.get("session_id")
+            if not session_id:
+                raise RuntimeError("Kernel returned no browser session")
+            try:
+                code = """
+                  try {
+                    await page.waitForFunction(
+                      () => document.querySelectorAll('a[href*=\"/torrent/\"]').length > 0,
+                      {timeout: 55000},
+                    );
+                  } catch (_) {}
+                  return await page.content();
+                """
+                result = request(
+                    KERNEL_ENDPOINT + "/browsers/" + urllib.parse.quote(session_id, safe="") + "/playwright/execute",
+                    {"code": code, "timeout_sec": 120},
+                    timeout=125,
+                )
+                body = result.get("result")
+                if not isinstance(body, str) or "/torrent/" not in body:
+                    raise RuntimeError("Kernel returned no 1337x results")
+                return body
+            finally:
+                # Browser time is billable; delete every short-lived fallback session.
+                try:
+                    request(
+                        KERNEL_ENDPOINT + "/browsers/" + urllib.parse.quote(session_id, safe=""),
+                        method="DELETE",
+                        timeout=20,
+                    )
+                except (OSError, urllib.error.URLError):
+                    pass
+
+        def flaresolverr_fetch(path):
+            payload = json.dumps({
+                "cmd": "request.get",
+                "url": ORIGIN + path,
+                "maxTimeout": 60000,
+            }).encode()
+            request = urllib.request.Request(
+                FLARESOLVERR_URL,
+                data=payload,
+                headers={"Content-Type": "application/json"},
+            )
+            with urllib.request.urlopen(request, timeout=75) as response:
+                result = json.load(response)
+            solution = result.get("solution", {})
+            body = solution.get("response")
+            if result.get("status") != "ok" or body is None:
+                raise RuntimeError("FlareSolverr returned no solution")
+            return body, solution.get("status", 502)
+
+        class Handler(BaseHTTPRequestHandler):
+            def do_GET(self):
+                with METRICS_LOCK:
+                    METRICS["in_flight"] += 1
+                try:
+                    # Avoid concurrent browser challenges and paid-proxy requests.
+                    with REQUEST_LOCK:
+                        try:
+                            body = call_provider("browserless", lambda: browserless_fetch(self.path))
+                            status = 200
+                        except (OSError, RuntimeError, ValueError, urllib.error.URLError):
+                            try:
+                                body = call_provider("kernel", lambda: kernel_fetch(self.path))
+                                status = 200
+                            except (OSError, RuntimeError, ValueError, urllib.error.URLError):
+                                body, status = call_provider("flaresolverr", lambda: flaresolverr_fetch(self.path))
+                    self.send_response(status)
+                    self.send_header("Content-Type", "text/html; charset=utf-8")
+                    self.send_header("Content-Length", str(len(body.encode())))
+                    self.end_headers()
+                    self.wfile.write(body.encode())
+                except (OSError, RuntimeError, ValueError, urllib.error.URLError) as error:
+                    body = b"1337x bridge upstream unavailable"
+                    self.send_response(502)
+                    self.send_header("Content-Type", "text/plain; charset=utf-8")
+                    self.send_header("Content-Length", str(len(body)))
+                    self.end_headers()
+                    self.wfile.write(body)
+                finally:
+                    with METRICS_LOCK:
+                        METRICS["in_flight"] -= 1
+
+            def log_message(self, format, *args):
+                pass
+
+        class StatsHandler(BaseHTTPRequestHandler):
+            def do_GET(self):
+                snapshot = metrics_snapshot()
+                if self.path == "/metrics":
+                    body = json.dumps(snapshot, indent=2).encode()
+                    content_type = "application/json; charset=utf-8"
+                elif self.path == "/" or self.path == "/index.html":
+                    payload = json.dumps(snapshot, indent=2)
+                    body = ("<!doctype html><title>1337x bridge costs</title>"
+                        "<style>body{background:#101218;color:#e8eaf0;font:16px system-ui;margin:3rem}pre{background:#181b24;padding:1.5rem;border-radius:8px}</style>"
+                        "<h1>1337x bridge usage</h1><p>Refreshes every 10 seconds. <a href='/metrics'>JSON</a></p>"
+                        "<pre id='metrics'></pre><script>const e=document.getElementById('metrics');async function f(){e.textContent=JSON.stringify(await fetch('/metrics').then(r=>r.json()),null,2)}f();setInterval(f,10000)</script>").encode()
+                    content_type = "text/html; charset=utf-8"
+                else:
+                    self.send_error(404)
+                    return
+                self.send_response(200)
+                self.send_header("Content-Type", content_type)
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+
+            def log_message(self, format, *args):
+                pass
+
+        threading.Thread(
+            target=ThreadingHTTPServer(("0.0.0.0", 1337), StatsHandler).serve_forever,
+            daemon=True,
+        ).start()
+        HTTPServer(("127.0.0.1", 8192), Handler).serve_forever()
+      '';
+    in {
+      description = "1337x Browserless, Kernel, and FlareSolverr bridge for Prowlarr";
+      after = [ "flaresolverr.service" ];
+      requires = [ "flaresolverr.service" ];
+      wantedBy = [ "multi-user.target" ];
+      serviceConfig = {
+        ExecStart = "${pkgs.python3}/bin/python3 ${bridge}";
+        Restart = "always";
+        RestartSec = 2;
+        DynamicUser = true;
+        StateDirectory = "1337x-bridge";
+        LoadCredential = [
+          "browserless-api-key:${config.sops.secrets.browserless-api-key.path}"
+          "kernel-api-key:${config.sops.secrets.kernel-api-key.path}"
+        ];
+      };
+    };
 
   networking = {
     hostName = "pilatus-nix";
@@ -299,7 +647,7 @@ in {
     nameservers = [ "1.1.1.1" "8.8.4.4" "8.8.8.8" "9.9.9.9" ];
     firewall = {
       enable = true;
-      allowedTCPPorts = [ 22 80 443 8007 ];
+      allowedTCPPorts = [ 22 80 443 1337 8007 ];
     };
   };
 
