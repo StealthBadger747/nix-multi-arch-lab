@@ -335,6 +335,10 @@ in {
         BROWSERLESS_ENDPOINT = "https://production-sfo.browserless.io/unblock"
         FLARESOLVERR_URL = "http://127.0.0.1:8191/v1"
         KERNEL_ENDPOINT = "https://api.onkernel.com"
+        # Retrieved from the Kernel dashboard billing response. Kernel bills
+        # browser runtime in GB-seconds; the managed browser allocation is 8 GB.
+        KERNEL_BROWSER_GB = 8
+        KERNEL_BROWSER_RATE_PER_GB_SECOND = 0.0000166667
         ORIGIN = "https://1337x.st"
         REQUEST_LOCK = threading.Lock()
         METRICS_LOCK = threading.Lock()
@@ -489,33 +493,18 @@ in {
                 )
                 with urllib.request.urlopen(request, timeout=15) as response:
                     sessions = json.load(response)
+                uptime_ms = sum(session.get("usage", {}).get("uptime_ms", 0) for session in sessions)
                 store_usage("kernel_sessions", {
                     "session_count": len(sessions),
-                    "uptime_ms": sum(session.get("usage", {}).get("uptime_ms", 0) for session in sessions),
-                    "source": "Kernel browser sessions API (not an account credit balance)",
+                    "uptime_ms": uptime_ms,
+                    "browser_gb": KERNEL_BROWSER_GB,
+                    "rate_per_gb_second_usd": KERNEL_BROWSER_RATE_PER_GB_SECOND,
+                    "calculated_browser_cost_usd": uptime_ms / 1000 * KERNEL_BROWSER_GB * KERNEL_BROWSER_RATE_PER_GB_SECOND,
+                    "source": "Actual Kernel browser-session API usage, priced in GB-seconds.",
                 })
             except (OSError, RuntimeError, ValueError, urllib.error.URLError) as error:
                 store_usage("kernel_sessions_error", {"error": type(error).__name__})
-            try:
-                dashboard_request = urllib.request.Request(
-                    "https://dashboard.onkernel.com/api/billing",
-                    headers={"Cookie": refresh_kernel_dashboard_cookie()},
-                )
-                with urllib.request.urlopen(dashboard_request, timeout=15) as response:
-                    billing = json.load(response)
-                store_usage("kernel_billing", {
-                    "plan": billing.get("org", {}).get("plan_id"),
-                    "credit_balance": billing.get("creditBalance"),
-                    "upcoming_invoice_total_usd": billing.get("upcomingInvoiceTotalUsd"),
-                    "usage_rates": billing.get("usageRates"),
-                    "source": "Kernel dashboard billing API",
-                })
-                clear_usage("kernel_billing_error")
-            except (OSError, RuntimeError, ValueError, urllib.error.URLError) as error:
-                store_usage("kernel_billing_error", {
-                    "error": type(error).__name__,
-                    "fallback": "Use kernel_sessions for persisted session-uptime estimates.",
-                })
+            clear_usage("kernel_billing_error")
 
         def call_provider(name, action):
             started = time.monotonic()
@@ -747,17 +736,7 @@ in {
                 refresh_provider_usage()
                 time.sleep(60)
 
-        def kernel_session_heartbeat_loop():
-            time.sleep(15)
-            while True:
-                try:
-                    refresh_kernel_dashboard_cookie()
-                except Exception:
-                    pass
-                time.sleep(30)
-
         threading.Thread(target=usage_refresh_loop, daemon=True).start()
-        threading.Thread(target=kernel_session_heartbeat_loop, daemon=True).start()
         threading.Thread(
             target=ThreadingHTTPServer(("0.0.0.0", 1337), StatsHandler).serve_forever,
             daemon=True,
