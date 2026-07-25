@@ -385,6 +385,10 @@ in {
                     (provider, time.time(), json.dumps(payload)),
                 )
 
+        def clear_usage(provider):
+            with database() as connection:
+                connection.execute("DELETE FROM provider_usage WHERE provider = ?", (provider,))
+
         def stored_auth(name, fallback):
             with database() as connection:
                 row = connection.execute(
@@ -476,6 +480,7 @@ in {
                     "usage_rates": billing.get("usageRates"),
                     "source": "Kernel dashboard billing API",
                 })
+                clear_usage("kernel_billing_error")
             except (OSError, RuntimeError, ValueError, urllib.error.URLError) as error:
                 store_usage("kernel_billing_error", {
                     "error": type(error).__name__,
