@@ -7,6 +7,15 @@ let
   pipxNoCheck = pkgs.pipx.overridePythonAttrs (_old: {
     doCheck = false;
   });
+  prowlarr1337xDefinition = pkgs.runCommand "1337x-single-page.yml" {
+    nativeBuildInputs = [ pkgs.python3 ];
+    source = pkgs.fetchurl {
+      url = "https://raw.githubusercontent.com/Prowlarr/Indexers/a09b504f75fa67991793c2f7d2144ba117b3b0f9/definitions/v11/1337x.yml";
+      hash = "sha256-DQdWqYLGuaasnLQo7CtwqFxgL9dDTMFoe12njnvmN5c=";
+    };
+  } ''
+    python3 ${./pc24/patch-1337x-definition.py} "$source" "$out"
+  '';
 in {
 
   imports = [
@@ -285,7 +294,7 @@ in {
       uiPort = 10095;
       peerPort = 12931;
     };
-    
+
     overseerr = {
       enable = true;
       stateDir = "/APPS/arr-apps/overseerr";
@@ -314,10 +323,15 @@ in {
   systemd.services.lidarr.serviceConfig.UMask = lib.mkForce "0002";
   systemd.services.prowlarr.serviceConfig.UMask = lib.mkForce "0002";
   systemd.services.prowlarr.environment.DOTNET_SYSTEM_NET_HTTP_SOCKETSHTTPHANDLER_HTTP2SUPPORT = "0";
+  # Keep one upstream request per search while selecting the correct no-query
+  # category page for Radarr, Sonarr, and Lidarr indexer tests.
+  systemd.services.prowlarr.preStart = lib.mkAfter ''
+    ${pkgs.coreutils}/bin/install -Dm0644 ${prowlarr1337xDefinition} \
+      /data/.state/nixarr/prowlarr/Definitions/Custom/1337x-single-page.yml
+  '';
 
-  # 1337x sometimes returns a slow Varnish 503 to Prowlarr's initial request.
-  # Browserless Unblock has a residential-proxy option that succeeds where the
-  # server's shared IP fails Cloudflare. FlareSolverr remains a no-cost fallback.
+  # Prefer local residential-IP engines, and only use metered cloud providers
+  # after strict response validation and short-cache de-duplication.
   systemd.services."1337x-flaresolverr-bridge" =
     let
       bridge = pkgs.writeText "1337x-flaresolverr-bridge.py" (
