@@ -115,6 +115,10 @@
         22      # SSH
         80      # HTTP
         443     # HTTPS
+        25      # SMTP (Stalwart, via Traefik)
+        465     # SMTPS (Stalwart, via Traefik)
+        587     # SMTP submission (Stalwart, via Traefik)
+        993     # IMAPS (Stalwart, via Traefik)
         6443    # Kubernetes API server
         2379    # etcd client API
         2380    # etcd peer API
