@@ -95,6 +95,32 @@ in {
       useRoutingFeatures = "both";
     };
 
+    # Public MX ingress for ucaia.com.  HAProxy keeps the SMTP session as raw
+    # TCP and carries the original sender address to the cluster with PROXY
+    # protocol v2.  Outbound delivery remains on SMTP2GO.
+    haproxy = {
+      enable = true;
+      config = ''
+        global
+          log stdout format raw local0
+
+        defaults
+          log global
+          mode tcp
+          option tcplog
+          timeout connect 10s
+          timeout client 5m
+          timeout server 5m
+
+        frontend ucaia_smtp_in
+          bind :25
+          default_backend ucaia_stalwart
+
+        backend ucaia_stalwart
+          server stalwart 10.0.20.5:25 check send-proxy-v2
+      '';
+    };
+
     atticd = {
       enable = true;
       user = "atticd";
@@ -422,7 +448,7 @@ PY
     nameservers = [ "1.1.1.1" "8.8.4.4" "8.8.8.8" "9.9.9.9" ];
     firewall = {
       enable = true;
-      allowedTCPPorts = [ 22 80 443 8080 ];
+      allowedTCPPorts = [ 22 25 80 443 8080 ];
       allowedUDPPorts = [ 51820 ];
     };
 
