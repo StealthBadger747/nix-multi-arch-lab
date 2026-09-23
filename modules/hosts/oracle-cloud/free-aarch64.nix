@@ -199,6 +199,18 @@ in {
           '';
         };
       };
+      # Forward Stalwart's HTTP-01 challenge for the public MX hostname over
+      # the private tailnet. TLS terminates at Stalwart for SMTP itself.
+      virtualHosts."mx.ucaia.com" = {
+        locations."/" = {
+          proxyPass = "http://10.0.20.5:80";
+          extraConfig = ''
+            proxy_set_header Host $host;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+          '';
+        };
+      };
       virtualHosts."_" = {
         default = true;
         locations."/" = {
