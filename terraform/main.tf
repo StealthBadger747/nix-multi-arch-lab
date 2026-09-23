@@ -132,6 +132,18 @@ resource "oci_core_security_list" "allow_ssh_http_https" {
     }
   }
 
+  # Public SMTP ingress terminates at HAProxy on oci-authentik-nix, which
+  # forwards the connection to Stalwart over Headscale with PROXY v2.
+  ingress_security_rules {
+    source      = "0.0.0.0/0"
+    protocol    = "6"
+    description = "Inbound SMTP relay for ucaia.com"
+    tcp_options {
+      min = 25
+      max = 25
+    }
+  }
+
   ingress_security_rules {
     source   = "0.0.0.0/0"
     protocol = "6"
