@@ -14,7 +14,7 @@
   proxmox = {
     qemuConf = {
       cores = 4;
-      memory = 8192;
+      memory = 16384;
       # boot = "order=virtio0,scsi0;net0";
       virtio0 = "local-zfs:vm-9999-disk-0";
     };
