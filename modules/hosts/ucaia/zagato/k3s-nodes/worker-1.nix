@@ -20,6 +20,8 @@ in {
     filenameSuffix = hostName;
     qemuConf = {
       name = hostName;
+      cores = lib.mkForce 12;
+      memory = lib.mkForce 24576;
       net0 = "virtio=D2:A8:F3:12:B9:E4,bridge=vmbr0,tag=20,firewall=1";
     };
   };
