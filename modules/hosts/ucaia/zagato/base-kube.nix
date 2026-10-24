@@ -25,7 +25,13 @@
   # Disabling the socket lets the service manage itself directly.
   systemd.sockets.iscsid.enable = false;
 
-  services.k3s.package = pkgs.k3s_1_36;
+  # Stable nixpkgs currently carries 1.36.4. Use the Zagato-specific, locked
+  # unstable input for the security-patched 1.36.5 staging release. Upgrade
+  # all servers and agents on this minor before selecting k3s_1_37.
+  services.k3s.package = pkgs-unstable.k3s_1_36;
+
+  # Stay on the supported LTS kernel; do not change system.stateVersion.
+  boot.kernelPackages = lib.mkDefault pkgs.linuxPackages_6_18;
 
   # Limit journald disk usage to prevent root disk fill-up on 30GB master nodes.
   services.journald.extraConfig = ''

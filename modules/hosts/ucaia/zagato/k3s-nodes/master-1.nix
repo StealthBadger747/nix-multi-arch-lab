@@ -52,7 +52,14 @@ services.keepalived.vrrpInstances.K3S_API = {
     role = "server";
     tokenFile = config.sops.secrets.k3s-cluster-token.path;
     clusterInit = true;
-    extraFlags = [ "--tls-san=10.0.20.5" ];
+    extraFlags = [
+      "--tls-san=10.0.20.5"
+      "--kube-apiserver-arg=oidc-issuer-url=https://zitadel.ucaia.com"
+      "--kube-apiserver-arg=oidc-client-id=393691534937097293"
+      "--kube-apiserver-arg=oidc-username-claim=sub"
+      "--kube-apiserver-arg=oidc-username-prefix=-"
+      "--kube-apiserver-arg=oidc-groups-claim=urn:zitadel:iam:org:project:roles"
+    ];
   };
 
 

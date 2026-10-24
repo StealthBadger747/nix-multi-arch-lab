@@ -85,7 +85,7 @@ in {
   ];
 
   systemd.services.mkfs-containerd = {
-    description = "Format containerd disk (ephemeral)";
+    description = "Initialize an empty containerd disk without erasing existing state";
     wants     = [ devUnit ];
     after     = [ devUnit ];
     wantedBy  = [ "multi-user.target" ];
@@ -98,7 +98,21 @@ in {
         echo "mkfs-containerd: $DISK not present; skipping."
         exit 0
       fi
-      mkfs.ext4 -F -E lazy_itable_init=1,lazy_journal_init=1,nodiscard -L ${fsLabel} "$DISK"
+      FS_TYPE=$(blkid -p -s TYPE -o value "$DISK" || true)
+      if [ "$FS_TYPE" = "ext4" ]; then
+        FS_LABEL=$(blkid -p -s LABEL -o value "$DISK" || true)
+        if [ "$FS_LABEL" != '${fsLabel}' ]; then
+          echo "Refusing to alter an existing filesystem with an unexpected label" >&2
+          exit 1
+        fi
+        echo "Keeping existing containerd filesystem and node identity"
+        exit 0
+      fi
+      if [ -n "$FS_TYPE" ] || [ -n "$(wipefs --no-act --noheadings --output TYPE "$DISK")" ]; then
+        echo "Refusing to format a disk with existing filesystem/partition signatures" >&2
+        exit 1
+      fi
+      mkfs.ext4 -E lazy_itable_init=1,lazy_journal_init=1,nodiscard -L ${fsLabel} "$DISK"
     '';
   };
 
@@ -159,7 +173,28 @@ in {
   };
 
   systemd.services.k3s.wants = [ "wait-containerd-mount.service" ];
+  systemd.services.k3s.requires = [ "wait-containerd-mount.service" ];
   systemd.services.k3s.after = [ "wait-containerd-mount.service" ];
+
+  # Netboot root is tmpfs. A new password on every boot is rejected by the
+  # existing server-side node registration, leaving a live VM NotReady.
+  # Retain the opaque identity files on the agent disk without displaying them.
+  systemd.services.k3s.preStart = lib.mkBefore ''
+    if [ -b '${diskById}' ]; then
+      identity_dir='${mountPoint}/node-identity'
+      mkdir -p "$identity_dir" /etc/rancher
+      chmod 0700 "$identity_dir"
+      if [ -d /etc/rancher/node ] && [ ! -L /etc/rancher/node ]; then
+        for entry in password id; do
+          if [ -f "/etc/rancher/node/$entry" ] && [ ! -e "$identity_dir/$entry" ]; then
+            mv "/etc/rancher/node/$entry" "$identity_dir/$entry"
+          fi
+        done
+        mv /etc/rancher/node "/etc/rancher/node.before-persistent-$(date +%s)"
+      fi
+      ln -sfn "$identity_dir" /etc/rancher/node
+    fi
+  '';
 
   # Create a 2 GiB swap file on the persistent containerd disk. The worker runs
   # with tmpfs root and no swap by default, which causes OOM kills when pods
