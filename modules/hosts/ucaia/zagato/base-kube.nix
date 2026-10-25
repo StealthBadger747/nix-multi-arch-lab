@@ -6,7 +6,28 @@
   pkgs,
   pkgs-unstable,
   ...
-}: {
+}:
+let
+  # The nixpkgs k3s_1_37 package embeds its manifests, including K3s's
+  # gateway-api-crd HelmChart, but currently bundles only the Traefik chart
+  # archives. That leaves this manifest pointing at a missing /static/charts
+  # asset and the install Job loops on HTTP 404. Bundle the exact chart version
+  # referenced by K3s 1.37.1. The URL is pinned to the k3s-charts commit and the
+  # archive hash matches that repository's index.yaml.
+  gatewayApiCrdChart = pkgs-unstable.fetchurl {
+    url = "https://raw.githubusercontent.com/k3s-io/k3s-charts/9cffc7050643dee09cbad77c19a6cf6b8da8bea1/assets/gateway-api-crd/gateway-api-crd-1.6.103.tgz";
+    hash = "sha256-lo+Lzz7IH5oLimhjNrmZxD3xRdh9KcMFpxTB/wQCaHw=";
+  };
+
+  zagatoK3s = pkgs-unstable.k3s_1_37.override {
+    overrideBundleAttrs = old: {
+      preBuild = (old.preBuild or "") + ''
+        mkdir -p ./pkg/static/embed/charts
+        cp ${gatewayApiCrdChart} ./pkg/static/embed/charts/gateway-api-crd-1.6.103.tgz
+      '';
+    };
+  };
+in {
 
   # Required for Rook/Ceph
   boot.kernelModules = [ "rbd" ];
@@ -25,10 +46,9 @@
   # Disabling the socket lets the service manage itself directly.
   systemd.sockets.iscsid.enable = false;
 
-  # Final target. Deploy the saved 1.36.5 staging builds to every server and
-  # agent first; do not deploy this target directly from 1.36.0. Both releases
-  # come from the Zagato-specific, locked unstable input.
-  services.k3s.package = pkgs-unstable.k3s_1_37;
+  # Keep the same Zagato-specific, locked k3s package on every server and
+  # agent. The staged 1.36.5 -> 1.37.1 rollout is complete.
+  services.k3s.package = zagatoK3s;
 
   # Stay on the supported LTS kernel; do not change system.stateVersion.
   boot.kernelPackages = lib.mkDefault pkgs.linuxPackages_6_18;
