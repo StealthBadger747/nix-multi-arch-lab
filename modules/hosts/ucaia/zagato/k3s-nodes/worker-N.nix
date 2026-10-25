@@ -33,6 +33,11 @@ in {
     boot
   '');
 
+  # Cloud-init supplies the worker's live network configuration. In the
+  # refreshed netboot system, ens18 is routable but unmanaged by networkd, so
+  # networkd-wait-online times out and leaves sshd failed during boot.
+  systemd.network.wait-online.enable = false;
+
   # Cloud init and proxmox integration
   networking.useNetworkd = true;
   services = {
@@ -79,6 +84,7 @@ in {
   };
 
   systemd.tmpfiles.rules = [
+    "d /var/empty 0755 root root -"
     "d ${mountPoint} 0755 root root -"
     "d ${mountPoint}/kubelet 0755 root root -"
     "d /var/lib/kubelet 0755 root root -"
