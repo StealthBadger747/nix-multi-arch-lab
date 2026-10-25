@@ -25,10 +25,10 @@
   # Disabling the socket lets the service manage itself directly.
   systemd.sockets.iscsid.enable = false;
 
-  # Stable nixpkgs currently carries 1.36.4. Use the Zagato-specific, locked
-  # unstable input for the security-patched 1.36.5 staging release. Upgrade
-  # all servers and agents on this minor before selecting k3s_1_37.
-  services.k3s.package = pkgs-unstable.k3s_1_36;
+  # Final target. Deploy the saved 1.36.5 staging builds to every server and
+  # agent first; do not deploy this target directly from 1.36.0. Both releases
+  # come from the Zagato-specific, locked unstable input.
+  services.k3s.package = pkgs-unstable.k3s_1_37;
 
   # Stay on the supported LTS kernel; do not change system.stateVersion.
   boot.kernelPackages = lib.mkDefault pkgs.linuxPackages_6_18;
