@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   smoke:
-    runs-on: arc-large
+    runs-on: arc-small
     steps:
       - name: Report runner platform
         shell: bash
